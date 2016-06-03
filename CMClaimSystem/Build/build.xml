@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="Claim Custom Widget Build" default="all" basedir=".">
+<property name="plugin.home" value="../claimCustomPlugin" />
+<property name="webapp.home" value="../claimCustomWidgets" />
+<target name="clean">
+	<delete>
+		<fileset dir=".">
+			<include name="*.jar" />
+			<include name="*.zip" />
+		</fileset>
+	</delete>	
+</target>
+
+<target name="package">
+    	<ant antfile="${plugin.home}/build.xml" >
+    	<property name="basedir" value="${plugin.home}"/>
+		 </ant>
+
+		<ant antfile="${webapp.home}/build.xml">
+		<property name="basedir" value="${webapp.home}"/>
+		</ant>
+	    <zip destfile="../claimCustomWidgets.zip">
+			<fileset dir="${plugin.home}">
+				<include name="*.jar" />
+			</fileset>
+			<fileset dir="${webapp.home}">
+				<include name="*.ear" />
+			</fileset>
+			<zipfileset dir="../ICMRegistry"  prefix="ICMRegistry">
+			</zipfileset>
+        </zip>
+
+</target>
+
+
+<target name="all" depends="clean,package"></target>
+</project>
