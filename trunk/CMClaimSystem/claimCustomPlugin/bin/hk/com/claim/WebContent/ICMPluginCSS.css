@@ -1,0 +1,14 @@
+
+.searchFeatureIcon {
+	width: 32px;
+	height: 32px;
+	background-repeat: no-repeat;
+	background-image: url('images/search.png');
+}
+
+.manualPurgeFeatureIcon {
+	width: 32px;
+	height: 32px;
+	background-repeat: no-repeat;
+	background-image: url('images/purge.png');
+}

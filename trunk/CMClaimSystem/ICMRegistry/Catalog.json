@@ -1,0 +1,22 @@
+{
+    "Name":"claim custom widget package",
+    "Description":"claim custom widget package",
+    "Locale":"",
+    "Version":"1.0",
+    "Categories":[
+        {
+            "id":"claimWidgets",
+            "title":"Claim Widgets"
+        }
+    ],
+    "Widgets":[
+		{
+		    "id": "ClaimMainWidget",
+		    "title": "Claim Main Widget",
+		    "category": "claimWidgets",
+		    "description": "The Main Widget that contains 3 taps",
+		    "definition": "ClaimMainWidget.json",
+		    "runtimeClassName": "hk.com.claim.widgets.claimMainWidget.ClaimMainWidget"
+		}
+	]
+}

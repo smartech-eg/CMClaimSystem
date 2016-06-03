@@ -1,0 +1,821 @@
+<div style="width: 100%; height: 100%">
+	<table>
+	<tr>
+		<td colspan="5">
+			<!--<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnDeleteJob">Delete the Job</button>-->
+			
+			<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnPend">Pend Job</button>
+			<!--<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnReject">Reject</button>-->
+			<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnCommit">Commit</button>
+			<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnConfirmDelete">Delete the Job</button>
+			<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnUpdateExpedite">Update Expedite</button>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			Job Number
+		</td>
+		<td colspan="3">
+			<input type="text" name="txtJobNumber"
+			data-dojo-type="dijit/form/TextBox"
+			data-dojo-props="trim:true, propercase:true,readOnly:true" data-dojo-attach-point="txtJobNumber"/>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			Expedite
+		</td>
+		<td colspan="3">
+			<input type="text" name="txtExpedite"
+			data-dojo-type="dijit/form/TextBox"
+			data-dojo-props="trim:true, propercase:true,readOnly:true" data-dojo-attach-point="txtExpedite"/>
+		</td>
+	</tr>
+	</table>
+	<div style="width: 100%; height: 100%">
+		<div style="width: 100%; height: 100%">
+			<div data-dojo-type="dijit/layout/TabContainer" style="width: 100%; height: 100%;" data-dojo-attach-point="mainTabs">
+				<div data-dojo-type="dijit/layout/ContentPane" title="Filing Information" data-dojo-props="selected:true" data-dojo-attach-point="fillingsTab">
+					<input name="txtFormSaved" data-dojo-attach-point="txtFormSaved" type='hidden'/>
+					<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnAddDoc">Add Document</button>
+					<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnDeleteDoc" data-dojo-props="disabled:true">Delete</button>
+					<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnDebtor" data-dojo-props="disabled:true">Debtors/Secured Parties</button>
+					<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnTaxLien" data-dojo-props="disabled:true">Tax Payer</button>
+					<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnUCC11" data-dojo-props="disabled:true">UCC 11</button>
+					<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnRejectLetter" data-dojo-props="disabled:true">Generate Rejection Letter</button>
+					<!--<div  data-dojo-attach-point="contextualMenuStore"></div>
+					<text data-dojo-attach-point="contextualMenuTargetRefPoint">RightClickMeForShowingContextualMenu</text>-->
+					<div style="overflow-x:auto;overflow-y:auto;width:730px;height:300px;">
+						<div data-dojo-type="dojox.grid.DataGrid" data-dojo-attach-point="docsDataGrid" data-dojo-props="rowSelector:'20px'">
+						</div>
+					</div>
+					
+				</div>
+				<div data-dojo-type="dijit/layout/ContentPane" title="Charges & Payments" data-dojo-attach-point="chargesTab">
+							
+				</div>
+				<div data-dojo-type="dijit/layout/ContentPane" title="Submitter Information" data-dojo-attach-point="submitterInfo" style="height:600px">
+					<div data-dojo-type="dijit/layout/TabContainer" data-dojo-attach-point="submitterInfoTabs" style="height:300px">
+						<div data-dojo-type="dijit/layout/ContentPane" title="Submitter" data-dojo-props="selected:true"  data-dojo-attach-point="submitterTab">
+                                                        <button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnFindSubmitter">Find</button>							
+                                                        <button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnCopyToSentTo">Copy To Sent To</button>
+							<table>
+								<tr>
+									<td>
+										Individual Name
+									</td>
+									<td colspan="3">
+										<table style="table-layout:fixed;width:580px">
+											<tr>
+												<td style="width:163px">
+													<input type="text" name="txtFirstName"
+													data-dojo-type="dijit/form/TextBox"
+													data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtFirstName" style="width:158px"/>
+												</td>
+												<td style="width:163px">
+													<input type="text" name="txtMiddleName"
+													data-dojo-type="dijit/form/TextBox"
+													data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtMiddleName" style="width:158px"/>
+												</td>
+												<td style="width:163px">
+													<input type="text" name="txtLastName"
+													data-dojo-type="dijit/form/TextBox"
+													data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtLastName" style="width:158px"/>
+												</td>
+												<td style="width:91px">
+													<input type="text" name="txtSuffixName"
+													data-dojo-type="dijit/form/TextBox"
+													data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtSuffixName" style="width:86px"/>
+												</td>
+											</tr>
+											<tr>
+												<td>First Name</td>
+												<td>Middle Name</td>
+												<td>Last Name</td>
+												<td>Suffix</td>
+											</tr>
+										</table>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Organization
+									</td>
+									<td colspan="3">
+										<input type="text" name="txtOrganization"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtOrganization" style="width:600px"/>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Address 1
+									</td>
+									<td colspan="3">
+										<input type="text" name="txtAddress1"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtAddress1" style="width:600px"/>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Address 2
+									</td>
+									<td colspan="3">
+										<input type="text" name="txtAddress2"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtAddress2" style="width:600px"/>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										City
+									</td>
+									<td>
+										<input type="text" name="txtCity"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtCity"/>
+									</td>
+									<td>
+										State
+									</td>
+									<td>
+										<input type="text" name="txtState"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtState"/>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Zip
+									</td>
+									<td>
+										<input type="text" name="txtZip"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtZip"/>
+									</td>
+									<td style="display:none">
+										Country
+									</td>
+									<td style="display:none">
+										<input type="text" name="txtCountry"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtCountry"/>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Phone
+									</td>
+									<td colspan="3">
+										<input type="text" name="txtPhone"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtPhone"/>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Email
+									</td>
+									<td colspan="3">
+										<input type="text" name="txtEmail"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtEmail" style="width:400px"/>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<label for="txtNotes">Notes:</label>
+									</td>
+									<td colspan="3">
+										<input type="text" name="txtNotes"
+											data-dojo-type="dijit/form/SimpleTextarea" data-dojo-props="trim:true, uppercase:true"
+											data-dojo-attach-point="txtNotes" rows=3 cols=200 style="width:500px;height:70px"/>
+									</td>
+								</tr>
+								<tr>
+									<td colspan="2">
+										<input type="radio" name="commiType" value="Print" checked data-dojo-type="dijit/form/RadioButton" data-dojo-attach-point="printRadio" /> <label for="printRadio">View PDF</label>
+										<input type="radio" name="commiType" value="Email" data-dojo-type="dijit/form/RadioButton"  data-dojo-attach-point="emailRadio"/> <label for="emailRadio">Email</label>
+									</td>
+								</tr>
+							</table>
+						</div>
+						<div data-dojo-type="dijit/layout/ContentPane" title="Sent To" data-dojo-attach-point="sentToTab">
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnFindSentTo">Find</button>
+							<table>
+								<tr>
+									<td>
+										Individual Name
+									</td>
+									<td colspan="3">
+										<table style="table-layout:fixed;width:580px">
+											<tr>
+												<td style="width:163px">
+													<input type="text" name="txtFirstName2"
+													data-dojo-type="dijit/form/TextBox"
+													data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtFirstName2" style="width:158px"/>
+												</td>
+												<td style="width:163px">
+													<input type="text" name="txtMiddleName2"
+													data-dojo-type="dijit/form/TextBox"
+													data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtMiddleName2" style="width:158px"/>
+												</td>
+												<td style="width:163px">
+													<input type="text" name="txtLastName2"
+													data-dojo-type="dijit/form/TextBox"
+													data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtLastName2" style="width:158px"/>
+												</td>
+												<td style="width:91px">
+													<input type="text" name="txtSuffixName2"
+													data-dojo-type="dijit/form/TextBox"
+													data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtSuffixName2" style="width:86px"/>
+												</td>
+											</tr>
+											<tr>
+												<td>First Name</td>
+												<td>Middle Name</td>
+												<td>Last Name</td>
+												<td>Suffix</td>
+											</tr>
+										</table>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Organization
+									</td>
+									<td colspan="3">
+										<input type="text" name="txtOrganization2"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtOrganization2" style="width:600px"/>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Address 1
+									</td>
+									<td colspan="3">
+										<input type="text" name="txtAddress12"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtAddress12"/ style="width:600px">
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Address 2
+									</td>
+									<td colspan="3">
+										<input type="text" name="txtAddress22"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtAddress22" style="width:600px"/>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										City
+									</td>
+									<td>
+										<input type="text" name="txtCity2"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtCity2"/>
+									</td>
+									<td>
+										State
+									</td>
+									<td>
+										<input type="text" name="txtState2"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtState2"/>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Zip
+									</td>
+									<td>
+										<input type="text" name="txtZip2"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtZip2"/>
+									</td>
+									<td style="display:none">
+										Country
+									</td>
+									<td style="display:none">
+										<input type="text" name="txtCountry2"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtCountry2"/>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Phone
+									</td>
+									<td colspan="3">
+										<input type="text" name="txtPhone2"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtPhone2"/>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Email
+									</td>
+									<td colspan="3">
+										<input type="text" name="txtEmail2"
+										data-dojo-type="dijit/form/TextBox"
+										data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtEmail2" style="width:400px"/>
+									</td>
+								</tr>
+							</table>
+						</div>
+						
+						
+					</div>
+				</div>
+				
+			</div>
+		</div>
+	</div>
+	<div data-dojo-type="dijit/Dialog" data-dojo-id="theDialog" title="Debtor/Secured Party" style="min-width: 5em;">
+		<input name="txtFillingKey" data-dojo-attach-point="txtFillingKey" type='hidden'/>
+		<input name="txtDialogType" data-dojo-attach-point="txtDialogType" type='hidden'/>
+		<input name="txtGUID" data-dojo-attach-point="txtGUID" type='hidden'/>
+		<input name="NumPages" data-dojo-attach-point="NumPages" type='hidden'/>
+		<input name="ProcessedBy" data-dojo-attach-point="ProcessedBy" type='hidden'/>
+		<input name="VerifiedBy" data-dojo-attach-point="VerifiedBy" type='hidden'/>
+		<input name="ModifiedBy" data-dojo-attach-point="ModifiedBy" type='hidden'/>
+		<input name="FOSId" data-dojo-attach-point="FOSId" type='hidden'/>
+		<input name="isFoS" data-dojo-attach-point="isFoS" type='hidden'/>
+		<div data-dojo-type="dijit/layout/TabContainer" style="width: 950px; height: 600px;" data-dojo-attach-point="debtorTabs">
+			<div data-dojo-type="dijit/layout/ContentPane" title="Filing Info" data-dojo-props="selected:true" data-dojo-attach-point="fillingInfoTab">
+				<input name="txtFillingNo"
+				data-dojo-attach-point="txtFillingNo" type='hidden'/>
+				<table>
+					<tr>
+						<td>
+							Filing Date
+						</td>
+						<td>
+							<input type="text" name="txtFillingDate"
+							data-dojo-type="dijit/form/DateTextBox"
+							constraints="{datePattern:'MM/dd/yyyy', strict:true}" data-dojo-attach-point="txtFillingDate" style="width:110px"/>
+							<input type="text" name="txtFillingTime" constraints="{timePattern:'hh:mm a', strict:true}"
+							data-dojo-type="dijit/form/TimeTextBox" data-dojo-attach-point="txtFillingTime" style="width:80px"/>
+						</td>
+						<td>
+							Form Type
+						</td>
+						<td colspan='3'>
+							<input type="text" name="txtFormType"
+							data-dojo-type="dijit/form/TextBox"
+							data-dojo-props="trim:true, propercase:true, readOnly:true" data-dojo-attach-point="txtFormType"/>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							IFSN
+						</td>
+						<td>
+							<input type="text" name="txtIFSN"
+							data-dojo-type="dijit/form/TextBox"
+							data-dojo-props="trim:true, propercase:true" data-dojo-attach-point="txtIFSN"/>
+						</td>
+						<td>
+							Type
+						</td>
+						<td colspan='3'>
+							<select data-dojo-type="dijit/form/ComboBox"name="ddlType" data-dojo-attach-point="ddlType">
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td data-dojo-attach-point="lblFillingId">
+							Filing Number
+						</td>
+						<td>
+							<input type="text" name="txtFillingId"
+							data-dojo-type="dijit/form/TextBox"
+							data-dojo-props="trim:true, propercase:true" data-dojo-attach-point="txtFillingId"/>
+						</td>
+						<td>
+							Action
+						</td>
+						<td>
+							<input name="txtApplyAction" data-dojo-attach-point="txtApplyAction" type='hidden' value="true"/>
+							<select data-dojo-type="dijit/form/ComboBox"name="ddlAction" data-dojo-attach-point="ddlAction">
+								<option></option>
+								<option>Assignment</option>
+								<option>Amendment</option>
+								<option>Continuation</option>
+								<option>Termination</option>
+								<option>Information Statement</option>
+								<option>FOS</option>
+								
+							</select>
+						</td>
+						<td>
+							Lapse Date
+						</td>
+						<td>
+							<input type="text" name="txtLapseDate"
+							data-dojo-type="dijit/form/TextBox"
+							data-dojo-props="trim:true, propercase:true, readOnly:true" data-dojo-attach-point="txtLapseDate"/>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Status
+						</td>
+						<td>
+							<select data-dojo-type="dijit/form/ComboBox"name="txtStatus" data-dojo-attach-point="txtStatus">
+								<option selected>Active</option>
+								<option>Lapsed</option>
+								<option>Purged</option>
+							</select>
+						</td>
+						<td data-dojo-attach-point="tdOldFillingId">
+							Filing Number Affected
+						</td>
+						<td colspan='3'>
+							<input type="text" name="txtOldFillingId"
+							data-dojo-type="dijit/form/TextBox"
+							data-dojo-props="trim:true, propercase:true" data-dojo-attach-point="txtOldFillingId"/>
+						</td>
+					</tr>
+					<tr>
+						<td data-dojo-attach-point="lblDebtor">Debtor</td>
+						<td colspan='5'>
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnAddDeptor">Add New Deptor</button>
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnViewDeptor" data-dojo-props="disabled:true" style="display:none">View Details</button>
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnDeleteDebtor" data-dojo-props="disabled:true">Delete</button>
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnCopyDebtor" data-dojo-props="disabled:true">Copy to Secured Parties</button>
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnMoveDebtorUp" data-dojo-props="disabled:true">Move Up</button>
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnMoveDebtorDown" data-dojo-props="disabled:true">Move Down</button>
+							<div style="overflow-x:auto;overflow-y:auto;width:700px;height:160px;">
+								<div data-dojo-type="dojox.grid.DataGrid" data-dojo-attach-point="debtorDataGrid" data-dojo-props="rowSelector:'20px',selectionMode:'single'"></div>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td data-dojo-attach-point="lblSecuredParty">Secured Party</td>
+						<td colspan='5'>
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnAddSecureParty">Add New Secured Party</button>
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnViewSecureParty" data-dojo-props="disabled:true" style="display:none">View Details</button>
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnDeleteSecuredParty" data-dojo-props="disabled:true">Delete</button>
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnCopySecuredParty" data-dojo-props="disabled:true">Copy to Debtors</button>
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnMoveSecuredPartyUp" data-dojo-props="disabled:true">Move Up</button>
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnMoveSecuredPartyDown" data-dojo-props="disabled:true">Move Down</button>
+							
+							<div style="overflow-x:auto;overflow-y:auto;width:700px;height:160px;">
+								<div data-dojo-type="dojox.grid.DataGrid" data-dojo-attach-point="securePartyDataGrid" data-dojo-props="rowSelector:'20px',selectionMode:'single'"></div>
+							</div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div data-dojo-type="dijit/layout/ContentPane" title="History">
+				Filenet Id:<input type="text" name="txtFilenetId" data-dojo-type="dijit/form/TextBox" data-dojo-props="trim:true, propercase:true" data-dojo-attach-point="txtFilenetId" style="width:250px"/>
+				<div style="height:10px"></div>
+				<div style="overflow-x:auto;overflow-y:auto;width:930px;height:400px;">
+					<div data-dojo-type="dojox.grid.DataGrid" data-dojo-attach-point="historyDataGrid" data-dojo-props="rowSelector:'20px'"></div>
+				</div>
+			</div>
+			<div data-dojo-type="dijit/layout/ContentPane" title="Notes">
+				<table>
+					<tr>
+						<td><label for="txtNotes">Notes:</label></td>
+						<td>
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnDltNote" data-dojo-props="disabled:true">Delete Note</button>
+							<div style="overflow-x:auto;overflow-y:auto;width:700px;height:160px;">
+								<div data-dojo-type="dojox.grid.DataGrid" data-dojo-attach-point="notesDataGrid" data-dojo-props="rowSelector:'20px',selectionMode:'single'"></div>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td>New Note:</td>
+						<td>
+							<input type="text" name="txtNewNote"
+								data-dojo-type="dijit/form/SimpleTextarea"
+								data-dojo-props="trim:true, propercase:true,rows: '4',cols:'50'" data-dojo-attach-point="txtNewNote"/>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2">
+							<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnAddNote">Add Note</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		
+		<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnSaveZDialog">Save</button>
+		<button data-dojo-type="dijit/form/Button" type="button" onClick="theDialog.hide()">Cancel</button>
+							
+	</div>
+	
+	<div data-dojo-type="dijit/Dialog" data-dojo-id="deptorDetailsDialog" title="Debtor/Secured Party Details" style="min-width: 5em;">
+		<input name="txtDebtorType" data-dojo-attach-point="txtDebtorType" type='hidden'/>
+		<input name="txtDebtorId" data-dojo-attach-point="txtDebtorId" type='hidden'/>
+		<input name="txtFromEsos" data-dojo-attach-point="txtFromEsos" type='hidden'/>
+		<table>
+			<tr>
+				<td>
+					Type
+				</td>
+				<td colspan="3">
+					<select data-dojo-type="dijit/form/ComboBox" name="ddlDebtorTypes" data-dojo-attach-point="ddlDebtorTypes">
+						<option value="1">Debtor</option>
+						<option value="0">Secured Party</option>
+					</select>
+					<select data-dojo-type="dijit/form/ComboBox" name="ddlTaxTypes" data-dojo-attach-point="ddlTaxTypes">
+						<option value="1">Tax Payer</option>
+						<option value="0">Lien Holder</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Individual Name
+				</td>
+				<td colspan="3">
+					<table>
+						<tr>
+							<td>
+								<input type="text" name="txtLastName3"
+								data-dojo-type="dijit/form/TextBox"
+								data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtLastName3"/>
+							</td>
+							<td>
+								<input type="text" name="txtFirstName3"
+								data-dojo-type="dijit/form/TextBox"
+								data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtFirstName3"/>
+							</td>
+							<td>
+								<input type="text" name="txtMiddleName3"
+								data-dojo-type="dijit/form/TextBox"
+								data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtMiddleName3"/>
+							</td>
+							<td>
+								<input type="text" name="txtSuffixName3"
+								data-dojo-type="dijit/form/TextBox"
+								data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtSuffixName3"/>
+							</td>
+						</tr>
+						<tr>
+							<td>Last Name</td>
+							<td>First Name</td>
+							<td>Middle Name</td>
+							<td>Suffix</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>
+					Organization
+				</td>
+				<td colspan="3">
+					<input type="text" name="txtOrganization3"
+					data-dojo-type="dijit/form/TextBox"
+					data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtOrganization3" style="width:600px"/>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Address 1
+				</td>
+				<td colspan="3">
+					<input type="text" name="txtAddress13"
+					data-dojo-type="dijit/form/TextBox"
+					data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtAddress13" style="width:600px"/>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Address 2
+				</td>
+				<td colspan="3">
+					<input type="text" name="txtAddress23"
+					data-dojo-type="dijit/form/TextBox"
+					data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtAddress23" style="width:600px"/>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					City
+				</td>
+				<td>
+					<input type="text" name="txtCity3"
+					data-dojo-type="dijit/form/TextBox"
+					data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtCity3"/>
+				</td>
+				<td>
+					State
+				</td>
+				<td>
+					<input type="text" name="txtState3"
+					data-dojo-type="dijit/form/TextBox"
+					data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtState3"/>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Zip
+				</td>
+				<td>
+					<input type="text" name="txtZip3"
+					data-dojo-type="dijit/form/TextBox"
+					data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtZip3"/>
+				</td>
+				<td>
+					Country
+				</td>
+				<td>
+					<input type="text" name="txtCountry3"
+					data-dojo-type="dijit/form/TextBox"
+					data-dojo-props="trim:true, uppercase:true" data-dojo-attach-point="txtCountry3"/>
+				</td>
+			</tr>
+		</table>
+			
+		<br/>
+		<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnSearchDeptor">Find</button>
+		<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnSaveDeptor">Save</button>
+		<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnCnclDeptor" onclick="deptorDetailsDialog.hide()">Cancel</button>
+		<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnCopySubmitter">Copy to Submitter</button>
+		
+	</div>
+	
+	<div data-dojo-type="dijit/Dialog" data-dojo-id="searchDeptorDialog" title="Search Debtor/Secured Party" style="width:1150px;height:500px">
+		<input name="txtDebtorType" data-dojo-attach-point="txtSearchType" type='hidden'/>
+		<table>
+			<tr>
+				<td>Customer Type: </td>
+				<td>
+					<input type="radio" name="customerType" value="Individual" data-dojo-type="dijit/form/RadioButton" data-dojo-attach-point="individualRadio" /> <label for="individualRadio">Individual</label>
+					<input type="radio" name="customerType" value="Organization" checked data-dojo-type="dijit/form/RadioButton"  data-dojo-attach-point="organizationRadio"/> <label for="organizationRadio">Organization</label>
+				</td>
+			</tr>
+			<tr>
+				<td>Search By: </td>
+				<td>
+					<input type="radio" name="searchBy" value="Name" checked data-dojo-attach-point="nameRadio" data-dojo-type="dijit/form/RadioButton"/> <label for="nameRadio">Name</label>
+					<input type="radio" data-dojo-type="dijit/form/RadioButton" name="searchBy" value="Billing Account Number" data-dojo-attach-point="billingRadio"/> <label for="billingRadio">Billing Account Number</label>
+				</td>
+			</tr>
+			<tr data-dojo-attach-point="organizationSearch">
+				<td>Organization Name</td>
+				<td>
+					<input type="text" name="txtOrganizationSearch" data-dojo-type="dijit/form/TextBox"	data-dojo-props="trim:true, propercase:true" data-dojo-attach-point="txtOrganizationSearch"/>
+				</td>
+			</tr>
+			<tr  style="display:none" data-dojo-attach-point="accountNumberSearch">
+				<td>Account Number</td>
+				<td>
+					<input type="text" name="txtAccountNumberSearch" data-dojo-type="dijit/form/TextBox"	data-dojo-props="trim:true, propercase:true" data-dojo-attach-point="txtAccountNumberSearch"/>
+				</td>
+			</tr>
+			<tr style="display:none" data-dojo-attach-point="individualSearch1">
+				<td>Customer Last Name</td>
+				<td>
+					<input type="text" name="txtLastNameSearch" data-dojo-type="dijit/form/TextBox"	data-dojo-props="trim:true, propercase:true" data-dojo-attach-point="txtLastNameSearch"/>
+				</td>
+			</tr>
+			<tr style="display:none" data-dojo-attach-point="individualSearch2">
+				<td>First</td>
+				<td>
+					<input type="text" name="txtFirstNameSearch" data-dojo-type="dijit/form/TextBox"	data-dojo-props="trim:true, propercase:true" data-dojo-attach-point="txtFirstNameSearch"/>
+				</td>
+			</tr>
+			<tr style="display:none" data-dojo-attach-point="individualSearch3">
+				<td>Middle</td>
+				<td>
+					<input type="text" name="txtMiddleNameSearch" data-dojo-type="dijit/form/TextBox"	data-dojo-props="trim:true, propercase:true" data-dojo-attach-point="txtMiddleNameSearch"/>
+				</td>
+			</tr>
+			
+			<tr><td colspan="2"></td></tr>
+			<tr><td colspan="2"><button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnFindDeptor">Find</button></td></tr>
+			<tr><td colspan="2"></td></tr>
+			<tr><td colspan="2">Search Results</td></tr>
+			<tr><td colspan="2">
+				<div style="overflow-x:auto;overflow-y:auto;width:1100px;height:200px;">
+					<div data-dojo-type="dojox.grid.DataGrid" data-dojo-attach-point="searchDataGrid" data-dojo-props="rowSelector:'20px'"></div>
+				</div>
+			</td></tr>
+		</table>
+		<button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnCnclSearch" onclick="searchDeptorDialog.hide()">Cancel</button>
+	</div>
+	<div data-dojo-type="dijit/Dialog" data-dojo-id="ucc11Dialog" title="UCC 11" style="width:1200px;height:700px">
+		 <div data-dojo-type="dijit/layout/ContentPane" title="test" data-dojo-attach-point="testIFrame" style="width:1200px;height:650px"></div>
+		 <button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnCnclUCC11" onclick="ucc11Dialog.hide()">Close</button>
+	</div>
+	<div data-dojo-type="dijit/Dialog" data-dojo-id="paymentsDialog" title="Charges & Payments" style="width:1200px;height:700px">
+		 <div data-dojo-type="dijit/layout/ContentPane" title="test" data-dojo-attach-point="paymentsIFrame" style="width:1200px;height:650px"></div>
+		 <button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnCnclPayment">Close</button>
+	</div>
+	<div data-dojo-type="dijit/Dialog" data-dojo-id="aknowledgeDialog" title="Acknowledgement Letter" style="width:60px;height:400px">
+		 <div data-dojo-type="dijit/layout/ContentPane" title="test" data-dojo-attach-point="aknowledgeIFrame" style="width:60px;height:350px"></div>
+		 Sending the Aknowlegement Letter via email ...
+	</div>
+	<div data-dojo-type="dijit/Dialog" data-dojo-id="paymentsDialog" title="Charges & Payments" style="width:1200px;height:700px">
+		 <div data-dojo-type="dijit/layout/ContentPane" title="test" data-dojo-attach-point="paymentsIFrame" style="width:1200px;height:650px"></div>
+		 <button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnCnclPayment">Close</button>
+	</div>
+	<div data-dojo-type="dijit/Dialog" data-dojo-id="rejectionDialog" title="Generate Rejection Letter" style="width:1200px;height:750px">
+		 <table style="height:650px;width:1200px">
+			<tr>
+				<td colspan="2">"Note: By clicking the reject button the selected filing will be deleted permanently"</td>
+			</tr>
+			<tr>
+				<td>Rejection Comments : </td>
+				<td>
+					<input type="text" name="txtRejectionNotes"
+						data-dojo-type="dijit/form/SimpleTextarea"
+						data-dojo-props="trim:true, propercase:true" data-dojo-attach-point="txtRejectionNotes" rows=4 cols=200 style="width:500px"/>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2">
+					General:<br/>
+					<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK1" /> <label for="soundexCheck">The record has not been communicated by a method or medium authorized by this filing Office</label><br/>
+					<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK2" /> <label for="soundexCheck">An amount at least equal to the filing fee was not submitted</label><br/>
+					<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK3" /> <label for="soundexCheck">Filing office is unable to read or decipher the information</label><br/>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2">
+					<table style="width:100%">
+						<tr>
+							<td>
+								INITIAL FINANCING STATEMENT<br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK4" /> <label for="soundexCheck">Failure to provide the name of the debtor</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK5" /> <label for="soundexCheck">Failure to indicate whether the debtor is an individual or an organization</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK6" /> <label for="soundexCheck">If identified as an individual, failure to provide the last name of the debtor</label><br/>
+								
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK100" /> <label for="soundexCheck">If identified as an organization, failure to provide organizational information for the debtor.</label><br/>
+								<span style="width:50px"></span><input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK7" /> <label for="soundexCheck">a type of organization</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK8" /> <label for="soundexCheck">a jurisdiction of organization</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK9" /> <label for="soundexCheck">an organization ID# or an indication that the debtor has none</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK10" /> <label for="soundexCheck">Failure to provide a mailing address for the debtor</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK11" /> <label for="soundexCheck">Failure to provide a name for the secured party.</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK12" /> <label for="soundexCheck">Failure to provide a mailing address for the secured party</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK13" /> <label for="soundexCheck">In the case of an assignment reflected on an initial financing statement, failure to provide a name of the assignee.</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK14" /> <label for="soundexCheck">In the case of an assignment reflected on an initial financing statement, failure to provide a mailing address for the assignee.</label><br/>
+								<div style="border:thin solid;width:290px;height:70px">
+									<table><tr><td colspan='2' style="height:5px"></td></tr>
+										<tr>
+											<td style="width:10px"></td>
+											<td>
+												<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK200" /> <label for="soundexCheck">Fee Paid.</label><br/>
+									Form of Payment <input type="text" name="txtFormOfPayment" data-dojo-type="dijit/form/TextBox" data-dojo-attach-point="txtFormOfPayment"/><br/>
+											</td>
+										</tr>
+									</table>
+									
+								</div>
+							</td>
+							<td>
+								AMENDMENT OR CORRECTION STATEMENT<br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK15" /> <label for="soundexCheck">Failure to identify a file number of an initial financing statement to which it relates.</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK16" /> <label for="soundexCheck">Identifies an initial financing statement for which effectiveness has lapsed</label><br/>
+								Continuation<br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK17" /> <label for="soundexCheck">Failure to file within the six-month window prior to lapse</label><br/>
+								Assignment<br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK18" /> <label for="soundexCheck">Failure to provide a name for the assignee.</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK19" /> <label for="soundexCheck">Failure to provide a mailing address for the assignee.</label><br/>
+								Amendment of Party Information<br/>
+								New Debtor<br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK20" /> <label for="soundexCheck">Failure to indicate whether the debtor is an individual or an organization.</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK21" /> <label for="soundexCheck">If identified as an individual, failure to provide the last name of the debtor.</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK200" /> <label for="soundexCheck">If identified as an organization, failure to provide organizational information for the debtor</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK22" /> <label for="soundexCheck">a type of organization</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK23" /> <label for="soundexCheck">a jurisdiction of organization</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK24" /> <label for="soundexCheck">an organizational ID# or indication that the debtor has none.</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK25" /> <label for="soundexCheck">Failure to provide a mailing address for the debtor.</label><br/>
+								New Secured Party<br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK26" /> <label for="soundexCheck">Failure to provide name for the secured party.</label><br/>
+								<input type="check" value="Soundex" data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="rejectCHK27" /> <label for="soundexCheck">Failure to provide a mailing address for the secured party.</label><br/>
+								
+								
+								
+								
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2">
+					 <button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnDoRejection" onclick="paymentsDialog.hide()">Generate</button>
+					 <button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnDoReset">Reset</button>
+					 <button data-dojo-type="dijit/form/Button" type="button" data-dojo-attach-point="btnCancelLetter" onclick="rejectionDialog.hide()">Close</button>
+				</td>
+			</tr>
+		 </table>
+		
+		
+	</div>
+</div>
