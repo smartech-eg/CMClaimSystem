@@ -1,3 +1,6 @@
+/*
+This is the main widget of the application that carries all UI elements (tabs,buttons,...etc)
+*/
 define(["dojo/_base/declare",
     "dojo/_base/lang",
     "dojo/text!./templates/ClaimMainWidget.html",
@@ -50,89 +53,62 @@ define(["dojo/_base/declare",
 			myCase: null,
 			jobNumber: null,
 			lapsePeriods: new Object(),
-			lastLapse:'',
             constructor: function(context){
 				this.context=context;
             },
-			testFun:function(){
-				var wid=this;
-				wid.getSolution().retrieveAllRoleMembers("Filing Officer",function(users){
-					console.log(users);
-					array.forEach(users.members,function(user){
-						console.log(user.name);
-					});
-				});
-				
-			},
+			/*
+			This function called automatically after widget creation
+			*/
 			postCreate: function(){
             	this.inherited(arguments);
 				var wid=this;
-				wid.testFun();
-				//wid.testIFrame='<iframe width="1000" height="800" data-dojo-attach-point="testIFrame" src="http://www.google.com">';
-				//console.log("teeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeest");
-				console.log(wid.testIFrame);
 				var repository=wid.getSolution().getTargetOS();
 				
+				/*
+				Row click event handler for the filings grid
+				Enables/Disables button according to the filing type
+				Display the filing image in the viewer
+				*/
 				this.docsDataGrid.on("RowClick", function(evt){
 					var idx = evt.rowIndex,
 					rowData = wid.docsDataGrid.getItem(idx);
-					if(ecm.model.desktop.currentRole.name == "Supervisor" || ecm.model.desktop.currentRole.name == "Filing Officer" ){
+					if(ecm.model.desktop.currentRole.name == "Supervisor"){
 						wid.btnDeleteDoc.set("disabled",false);
-						
+						wid.btnRejectLetter.set("disabled",false);
 					}
-					wid.btnRejectLetter.set("disabled",false);
+					
 					repository.retrieveItem(rowData.GUID, lang.hitch(wid, function(retItem) {
-						repository.retrieveItem(rowData.GUID, lang.hitch(wid, function(releasedItem) {
-							if(releasedItem.attributes['ESOS_DocType']=='Tax Lien'){
-								wid.btnDebtor.set("disabled",true);
-								wid.btnUCC11.set("disabled",true);
-								wid.btnTaxLien.set("disabled",false);
-							}
-							else if(releasedItem.attributes['ESOS_DocType']=='UCC11'){
-								wid.btnDebtor.set("disabled",true);
-								wid.btnTaxLien.set("disabled",true);
-								wid.btnUCC11.set("disabled",false);
-							}
-							else{
-								wid.btnDebtor.set("disabled",false);
-								wid.btnTaxLien.set("disabled",true);
-								wid.btnUCC11.set("disabled",true);
-							}
-							if(releasedItem.attributes['ESOS_Stamped'] != true && releasedItem.attributes['ESOS_Stamped'] != 'true'){
-								var serviceParams = new Object();
-								var jsonStr="['"+releasedItem.attributes['DocumentTitle']+"']";
-								serviceParams.input = jsonStr;
-								Request.invokePluginService("claimCustomPlugin", "stampService",
-								{
-									requestParams: serviceParams,
-									synchronous:true,
-									requestCompleteCallback: function(response) {
-										repository.retrieveItem(rowData.GUID, lang.hitch(wid, function(finalVersion) {
-										var properties = [{"name": "ESOS_Stamped","value" : true},{"name": "ESOS_Redaction_Reviewed","value" : true}];
-											finalVersion.saveAttributes(properties,finalVersion.template,null,null,false,function(response) {
-												var payload = {"contentItem": finalVersion, "action": "open"};
-												wid.onBroadcastEvent("icm.OpenDocument", payload);
-											});
-										}),releasedItem.template,"released",releasedItem.vsId);
-									}
-								});
-							}
-							else{
-								var payload = {"contentItem": releasedItem, "action": "open"};
-								wid.onBroadcastEvent("icm.OpenDocument", payload);
-								var properties = [{"name": "ESOS_Redaction_Reviewed","value" : true}];
-								releasedItem.saveAttributes(properties,releasedItem.template,null,null,false,function(response) {
-								});
-							}
-							console.log("teeeeeeeeeeeeest");
-							console.log(releasedItem);
-						}),retItem.template,"released",retItem.vsId);
+						//var acn=new Action();
+						/*wid.onPublishEvent("icm.SelectDocument", {
+							contentItem : retItem
+						});*/
+						if(retItem.attributes['ESOS_DocType']=='Tax Lien'){
+							wid.btnDebtor.set("disabled",true);
+							wid.btnUCC11.set("disabled",true);
+							wid.btnTaxLien.set("disabled",false);
+						}
+						else if(retItem.attributes['ESOS_DocType']=='UCC11'){
+							wid.btnDebtor.set("disabled",true);
+							wid.btnTaxLien.set("disabled",true);
+							wid.btnUCC11.set("disabled",false);
+						}
+						else{
+							wid.btnDebtor.set("disabled",false);
+							wid.btnTaxLien.set("disabled",true);
+							wid.btnUCC11.set("disabled",true);
+						}
+						var payload = {"contentItem": retItem, "action": "open"};
+						wid.onBroadcastEvent("icm.OpenDocument", payload);
 					}));
 				});
 				
+				/*
+				Row click event handler for the debtors grid
+				Enables/Disables buttons (Delete/Move Up/Move Down) according to the selected debtor
+				*/
 				this.debtorDataGrid.on("RowClick", function(evt){
 					var idx = evt.rowIndex;
-					var size=wid.debtorDataGrid.store._arrayOfTopLevelItems.length;
+					var size=wid.debtorDataGrid.store._arrayOfAllItems.length;
 					var item = wid.debtorDataGrid.getItem(idx);
 					wid.btnViewDeptor.set("disabled",false);
 					if(item.FromEsos=='true')
@@ -150,6 +126,10 @@ define(["dojo/_base/declare",
 						wid.btnMoveDebtorUp.set("disabled",true);
 				});
 				
+				/*
+				Event handler for the debtors grid
+				Set rows colors according to the debtor type (FromEsos/From DCap)
+				*/
 				this.debtorDataGrid.on("StyleRow", function(row){
 					var item = wid.debtorDataGrid.getItem(row.index);
 					if(item){
@@ -162,9 +142,13 @@ define(["dojo/_base/declare",
 					 wid.debtorDataGrid.edit.styleRow(row);
 				});
 				
+				/*
+				Row click event handler for the secured parties grid
+				Enables/Disables buttons (Delete/Move Up/Move Down) according to the selected secured party
+				*/
 				this.securePartyDataGrid.on("RowClick", function(evt){
 					var idx = evt.rowIndex;
-					var size=wid.securePartyDataGrid.store._arrayOfTopLevelItems.length;
+					var size=wid.securePartyDataGrid.store._arrayOfAllItems.length;
 					var item = wid.securePartyDataGrid.getItem(idx);
 					if(theDialog.get("title") == 'Tax Payer'){
 						wid.btnViewSecureParty.set("disabled",true);
@@ -191,6 +175,10 @@ define(["dojo/_base/declare",
 						wid.btnMoveSecuredPartyUp.set("disabled",true);
 				});
 				
+				/*
+				Event handler for the secured parties grid
+				Set rows colors according to the secured party type (FromEsos/From DCap)
+				*/
 				this.securePartyDataGrid.on("StyleRow", function(row){
 					var item = wid.securePartyDataGrid.getItem(row.index);
 					if(item){
@@ -202,32 +190,58 @@ define(["dojo/_base/declare",
 					 wid.securePartyDataGrid.focus.styleRow(row);
 					 wid.securePartyDataGrid.edit.styleRow(row);
 				});
+				
 				/*
-				this.menu = new ContextualMenu({
-             	    dojoAttachPoint: "customContextualMenu" //consistent to the id value of the contextualMenu's definition in the page widget definition json file;
-                 });
-				 
-				 this.contextualMenuStore.appendChild(this.menu.domNode); 
-				 
-				 MenuManager.setTargetReference(this.menu, "contextualMenuTargetRefPoint");
-				 MenuManager.setSelectedItems(this.id, "contextualMenuTargetRefPoint", [{customProperty: true}], "CustomContext");
-				this.menu.startup();
+				Event handler for the filings delete buton
+				Deletes the selected filing after user's confirmation
 				*/
+				this.btnDeleteDoc.on("click",function(e){
+					var dialog=new ConfirmDialog({ message: "Are you sure you want to delete the selected document(s) ?",title: "Confirmation"});
+					dialog.confirmAction=function(){
+						var selectedIds=new Array();
+						var repository=wid.getSolution().getTargetOS();
+						array.forEach(wid.docsDataGrid.selection.getSelected(), function(row){
+							var serviceParams = new Object();
+							serviceParams.input = row.Filing_Number;
+								
+							Request.invokePluginService("eSoSCustomPlugin", "deleteDocService",
+							{
+								requestParams: serviceParams,
+								synchronous:true,
+								requestCompleteCallback: function(response) {	// success
+									repository.retrieveItem(row.GUID,function(contentItem){
+										repository.deleteItems([contentItem],function(){
+											wid.docsDataGrid.store.deleteItem(row);
+										},true);
+									});
+								}
+							});
+						});
+					}
+					dialog.show();
+				});
 				
-				
+				/*
+				Event handler for the notes grid
+				Enable/Disable notes delete button according to the selected note index
+				*/
 				this.notesDataGrid.on("RowClick", function(evt){
 					var idx = evt.rowIndex;
 					var rowData = wid.notesDataGrid.getItem(idx);
-					if((wid.notesDataGrid.store._arrayOfTopLevelItems.length == (idx+1)) && rowData.User==wid.getSolution().getTargetOS().userId)
+					if((wid.notesDataGrid.store._arrayOfAllItems.length == (idx+1)) && rowData.User==wid.getSolution().getTargetOS().userId)
 						wid.btnDltNote.set("disabled",false);
 					else
 						wid.btnDltNote.set("disabled",true);
 				});
 				
+				/*
+				Event handler for the secured parties move down button
+				Moves the selected secured party down
+				*/
 				this.btnMoveSecuredPartyDown.on("click",function(evt){
 					var fromRow = wid.securePartyDataGrid.selection.getSelected()[0];
 					var fromIndex=fromRow._0;
-					var toRow = wid.securePartyDataGrid.store._arrayOfTopLevelItems[fromIndex+1];
+					var toRow = wid.securePartyDataGrid.store._arrayOfAllItems[fromIndex+1];
 					var name1=fromRow.name;
 					var name2=toRow.name;
 					
@@ -268,17 +282,21 @@ define(["dojo/_base/declare",
 					wid.securePartyDataGrid.selection.setSelected(fromIndex,false);
 					wid.securePartyDataGrid.selection.setSelected(fromIndex+1,true);
 					wid.securePartyDataGrid.update();
-					var size=wid.securePartyDataGrid.store._arrayOfTopLevelItems.length;
+					var size=wid.securePartyDataGrid.store._arrayOfAllItems.length;
 					
 					if((fromIndex+1) == (size -1))
 						wid.btnMoveSecuredPartyDown.set("disabled",true);
 					wid.btnMoveSecuredPartyUp.set("disabled",false);
 				});
 				
+				/*
+				Event handler for the secured parties move up button
+				Moves the selected secured party up
+				*/
 				this.btnMoveSecuredPartyUp.on("click",function(evt){
 					var fromRow = wid.securePartyDataGrid.selection.getSelected()[0];
 					var fromIndex=fromRow._0;
-					var toRow = wid.securePartyDataGrid.store._arrayOfTopLevelItems[fromIndex-1];
+					var toRow = wid.securePartyDataGrid.store._arrayOfAllItems[fromIndex-1];
 					var name1=fromRow.name;
 					var name2=toRow.name;
 					
@@ -319,17 +337,21 @@ define(["dojo/_base/declare",
 					wid.securePartyDataGrid.selection.setSelected(fromIndex,false);
 					wid.securePartyDataGrid.selection.setSelected(fromIndex-1,true);
 					wid.securePartyDataGrid.update();
-					var size=wid.securePartyDataGrid.store._arrayOfTopLevelItems.length;
+					var size=wid.securePartyDataGrid.store._arrayOfAllItems.length;
 					
 					if((fromIndex-1) == 0)
 						wid.btnMoveSecuredPartyUp.set("disabled",true);
 					wid.btnMoveSecuredPartyDown.set("disabled",false);
 				});
 				
+				/*
+				Event handler for the debtor move down button
+				Moves the selected debtor down
+				*/
 				this.btnMoveDebtorDown.on("click",function(evt){
 					var fromRow = wid.debtorDataGrid.selection.getSelected()[0];
 					var fromIndex=fromRow._0;
-					var toRow = wid.debtorDataGrid.store._arrayOfTopLevelItems[fromIndex+1];
+					var toRow = wid.debtorDataGrid.store._arrayOfAllItems[fromIndex+1];
 					var name1=fromRow.name;
 					var name2=toRow.name;
 					
@@ -370,17 +392,21 @@ define(["dojo/_base/declare",
 					wid.debtorDataGrid.selection.setSelected(fromIndex,false);
 					wid.debtorDataGrid.selection.setSelected(fromIndex+1,true);
 					wid.debtorDataGrid.update();
-					var size=wid.debtorDataGrid.store._arrayOfTopLevelItems.length;
+					var size=wid.debtorDataGrid.store._arrayOfAllItems.length;
 					
 					if((fromIndex+1) == (size -1))
 						wid.btnMoveDebtorDown.set("disabled",true);
 					wid.btnMoveDebtorUp.set("disabled",false);
 				});
 				
+				/*
+				Event handler for the debtor move up button
+				Moves the selected debtor up
+				*/
 				this.btnMoveDebtorUp.on("click",function(evt){
 					var fromRow = wid.debtorDataGrid.selection.getSelected()[0];
 					var fromIndex=fromRow._0;
-					var toRow = wid.debtorDataGrid.store._arrayOfTopLevelItems[fromIndex-1];
+					var toRow = wid.debtorDataGrid.store._arrayOfAllItems[fromIndex-1];
 					var name1=fromRow.name;
 					var name2=toRow.name;
 					
@@ -421,18 +447,26 @@ define(["dojo/_base/declare",
 					wid.debtorDataGrid.selection.setSelected(fromIndex,false);
 					wid.debtorDataGrid.selection.setSelected(fromIndex-1,true);
 					wid.debtorDataGrid.update();
-					var size=wid.debtorDataGrid.store._arrayOfTopLevelItems.length;
+					var size=wid.debtorDataGrid.store._arrayOfAllItems.length;
 					
 					if((fromIndex-1) == 0)
 						wid.btnMoveDebtorUp.set("disabled",true);
 					wid.btnMoveDebtorDown.set("disabled",false);
 				});
-				
+				/*
+				Event handler for the history grid
+				Displays the Filenet ID of the selected row to the Filenet ID text field
+				*/
 				this.historyDataGrid.on("RowClick", function(evt){
 					var idx = evt.rowIndex;
 					var rowData = wid.historyDataGrid.getItem(idx);
 					wid.txtFilenetId.setValue(rowData.GUID);
 				});
+				
+				/*
+				Event handler for the notes delete buton
+				Deletes the selected note after user's confirmation
+				*/
 				this.btnDltNote.on("click",function(e){
 					var dialog=new ConfirmDialog({ message: "Are you sure you want to delete the selected note ?",title: "Confirmation"});
 					dialog.confirmAction=function(){
@@ -443,7 +477,7 @@ define(["dojo/_base/declare",
 							serviceParams.input = row.NoteId;
 							serviceParams.input2 = wid.isFoS.value=='true'?true:false;
 							
-							Request.invokePluginService("claimCustomPlugin", "deleteNoteService",
+							Request.invokePluginService("eSoSCustomPlugin", "deleteNoteService",
 							{
 								requestParams: serviceParams,
 								synchronous:true,
@@ -456,6 +490,10 @@ define(["dojo/_base/declare",
 					dialog.show();
 				});
 				
+				/*
+				Event handler for the debtors delete buton
+				Deletes the selected debtor after user's confirmation
+				*/
 				this.btnDeleteDebtor.on("click",function(e){
 					var msg="";
 					if(wid.txtDialogType.value=="TaxLien")
@@ -471,7 +509,7 @@ define(["dojo/_base/declare",
 							serviceParams.input = row.debtorId;
 							serviceParams.input2 = wid.isFoS.value=='true'?true:false;
 							
-							Request.invokePluginService("claimCustomPlugin", "deptorDeleteService",
+							Request.invokePluginService("eSoSCustomPlugin", "deptorDeleteService",
 							{
 								requestParams: serviceParams,
 								synchronous:true,
@@ -484,6 +522,10 @@ define(["dojo/_base/declare",
 					dialog.show();
 				});
 				
+				/*
+				Event handler for the secured parties delete buton
+				Deletes the selected secured party after user's confirmation
+				*/
 				this.btnDeleteSecuredParty.on("click",function(e){
 					var msg="";
 					if(wid.txtDialogType.value=="TaxLien")
@@ -499,7 +541,7 @@ define(["dojo/_base/declare",
 							serviceParams.input = row.securePartyId;
 							serviceParams.input2 = wid.isFoS.value=='true'?true:false;
 							
-							Request.invokePluginService("claimCustomPlugin", "deptorDeleteService",
+							Request.invokePluginService("eSoSCustomPlugin", "deptorDeleteService",
 							{
 								requestParams: serviceParams,
 								synchronous:true,
@@ -512,6 +554,10 @@ define(["dojo/_base/declare",
 					dialog.show();
 				});
 				
+				/*
+				Event handler for the debtors/secured parties buton
+				Retrieves debtors and secured parties lists and open the dialog
+				*/
 				this.btnDebtor.on("click",function(e){
 					wid.debtorTabs.selectChild(wid.fillingInfoTab);
 					theDialog.set("title","Debtors/Secured Parties");
@@ -530,8 +576,20 @@ define(["dojo/_base/declare",
 						selectedIds.push(row);
 					});
 					wid.txtDialogType.value="Debtor";
+					var serviceParams2 = new Object();
+					serviceParams2.input = selectedIds[0].Filing_Number;
 						
-					wid.ddlType.setValue("");
+					Request.invokePluginService("eSoSCustomPlugin", "reviewDocService",
+					{
+						requestParams: serviceParams2,
+						synchronous:true,
+						requestCompleteCallback: function(response) {	// success
+							var store = wid.docsDataGrid.store;
+							store.setValue(selectedIds[0], 'Reviewed', 'Yes');
+							wid.docsDataGrid.update();
+						}				
+					});
+					
 					wid.initDebtorSecureParty(selectedIds[0].Filing_Number,selectedIds[0].GUID);
 					theDialog.show();
 					wid.securePartyDataGrid.resize();
@@ -540,7 +598,10 @@ define(["dojo/_base/declare",
 					wid.notesDataGrid.resize();
 				});
 				
-		
+				/*
+				Event handler for the UCC11 buton
+				Opens UCC11 dialog
+				*/
 				this.btnUCC11.on("click",function(e){
 					var selectedIds=new Array();
 					array.forEach(wid.docsDataGrid.selection.getSelected(), function(row){
@@ -550,7 +611,7 @@ define(["dojo/_base/declare",
 					var serviceParams2 = new Object();
 					serviceParams2.input = selectedIds[0].Filing_Number;
 						
-					Request.invokePluginService("claimCustomPlugin", "reviewDocService",
+					Request.invokePluginService("eSoSCustomPlugin", "reviewDocService",
 					{
 						requestParams: serviceParams2,
 						synchronous:true,
@@ -571,6 +632,19 @@ define(["dojo/_base/declare",
 					
 				});
 				
+				/*
+				Event handler for the rejection letter buton
+				Opens rejection letter dialog
+				*/
+				this.btnRejectLetter.on("click",function(e){
+					rejectionDialog.show();
+				});
+				
+				
+				/*
+				Event handler for the rejection letter reset buton
+				Resets all rejection letter controls
+				*/
 				this.btnDoReset.on("click",function(e){
 					wid.rejectCHK1.setChecked(false);
 					wid.rejectCHK2.setChecked(false);
@@ -604,122 +678,105 @@ define(["dojo/_base/declare",
 					wid.rejectionNotes.setValue('');
 				});
 				
-				
-				wid.txtLapseDate.on("change",function(newValue){
-					if(newValue && newValue != ''){
-						var lapsedDate=new Date(newValue);
-						lapsedDate.setHours(23);
-						lapsedDate.setMinutes(59);
-						var currDate=new Date();
-						
-						if(lapsedDate<currDate){
-							wid.btnSaveZDialog.setDisabled(true);
+				/*
+				Event handler for the rejection letter generate buton
+				Generates the rejection letter based on the entered information
+				*/
+				this.btnDoRejection.on("click",function(e){
+					var selectedIds=new Array();
+					var repository=wid.getSolution().getTargetOS();
+					array.forEach(wid.docsDataGrid.selection.getSelected(), function(row){
+						selectedIds.push(row);
+					});
+					
+					var reasons=new Array();
+					if(wid.rejectCHK1.checked)
+						reasons.push("1");
+					if(wid.rejectCHK2.checked)
+						reasons.push("2");
+					if(wid.rejectCHK3.checked)
+						reasons.push("3");
+					if(wid.rejectCHK4.checked)
+						reasons.push("4");
+					if(wid.rejectCHK5.checked)
+						reasons.push("5");
+					if(wid.rejectCHK6.checked)
+						reasons.push("6");
+					if(wid.rejectCHK7.checked)
+						reasons.push("7");
+					if(wid.rejectCHK8.checked)
+						reasons.push("8");
+					if(wid.rejectCHK9.checked)
+						reasons.push("9");
+					if(wid.rejectCHK10.checked)
+						reasons.push("10");
+					if(wid.rejectCHK11.checked)
+						reasons.push("11");
+					if(wid.rejectCHK12.checked)
+						reasons.push("12");
+					if(wid.rejectCHK13.checked)
+						reasons.push("13");
+					if(wid.rejectCHK14.checked)
+						reasons.push("14");
+					if(wid.rejectCHK15.checked)
+						reasons.push("15");
+					if(wid.rejectCHK16.checked)
+						reasons.push("16");
+					if(wid.rejectCHK17.checked)
+						reasons.push("17");
+					if(wid.rejectCHK18.checked)
+						reasons.push("18");
+					if(wid.rejectCHK19.checked)
+						reasons.push("19");
+					if(wid.rejectCHK20.checked)
+						reasons.push("20");
+					if(wid.rejectCHK21.checked)
+						reasons.push("21");
+					if(wid.rejectCHK22.checked)
+						reasons.push("22");
+					if(wid.rejectCHK23.checked)
+						reasons.push("23");
+					if(wid.rejectCHK24.checked)
+						reasons.push("24");
+					if(wid.rejectCHK25.checked)
+						reasons.push("25");
+					if(wid.rejectCHK26.checked)
+						reasons.push("26");
+					if(wid.rejectCHK27.checked)
+						reasons.push("27");
+					//alert(reasons.join(","));
+					var filingNo=selectedIds[0].Filing_Number , user=wid.getSolution().getTargetOS().userId;
+							//window.open("http://localhost:500/letter/RejectionLetter?filingNo="+filingNo+"&user="+user+"&rejectionNotes="+textarea.getValue());
+					var url = window.location.href;
+					var ip = url.split("/")[2];
+					alert("http://"+ip.split(":")[0]+":500/letter/RejectionLetter?filingNo="+filingNo+"&user="+user+"&rejectionNotes="+wid.txtRejectionNotes.getValue()+"&reasons="+reasons.join(","));
+					window.showModalDialog("http://"+ip.split(":")[0]+":500/letter/RejectionLetter?filingNo="+filingNo+"&user="+user+"&rejectionNotes="+wid.txtRejectionNotes.getValue()+"&formOfPayment="+wid.txtFormOfPayment.getValue()+"&reasons="+reasons.join(","), "", 'dialogHeight=10px,dialogWidth=10px,status=no,toolbar=no,menubar=no,location=no');
+					
+					
+					var serviceParams = new Object();
+					serviceParams.input = selectedIds[0].Filing_Number;
+					
+					//setTimeout(
+					Request.invokePluginService("eSoSCustomPlugin", "deleteDocService",
+					{
+						requestParams: serviceParams,
+						synchronous:true,
+						requestCompleteCallback: function(response) {	// success
+							repository.retrieveItem(selectedIds[0].GUID,function(contentItem){
+								repository.deleteItems([contentItem],function(){
+									wid.docsDataGrid.store.deleteItem(selectedIds[0]);
+									rejectionDialog.hide();
+								},true);
+							});
 						}
-						else{
-							wid.btnSaveZDialog.setDisabled(false);
-						}
-						
-					}
+					});
 				});
-				wid.txtLastName3.on("keyup",function(newValue){
-					var re = /^[a-zA-Z0-9 ]$/i;
-					
-					if(!/^[a-zA-Z0-9 \'\".,?!:;\-\\/()\[\]]+$/.test(wid.txtLastName3.getValue())){
-						var str=wid.txtLastName3.getValue();
-						wid.txtLastName3.setValue(str.substring(0, str.length - 1));
-					}
 				
-				});
-				wid.txtFirstName3.on("keyup",function(newValue){
-					var re = /^[a-zA-Z0-9 ]$/i;
-					
-					if(!/^[a-zA-Z0-9 \'\".,?!:;\-\\/()\[\]]+$/.test(wid.txtFirstName3.getValue())){
-						var str=wid.txtFirstName3.getValue();
-						wid.txtFirstName3.setValue(str.substring(0, str.length - 1));
-					}
-				
-				});
-				wid.txtMiddleName3.on("keyup",function(newValue){
-					var re = /^[a-zA-Z0-9 ]$/i;
-					
-					if(!/^[a-zA-Z0-9 \'\".,?!:;\-\\/()\[\]]+$/.test(wid.txtMiddleName3.getValue())){
-						var str=wid.txtMiddleName3.getValue();
-						wid.txtMiddleName3.setValue(str.substring(0, str.length - 1));
-					}
-				
-				});
-				wid.txtSuffixName3.on("keyup",function(newValue){
-					var re = /^[a-zA-Z0-9 ]$/i;
-					
-					if(!/^[a-zA-Z0-9 \'\".,?!:;\-\\/()\[\]]+$/.test(wid.txtSuffixName3.getValue())){
-						var str=wid.txtSuffixName3.getValue();
-						wid.txtSuffixName3.setValue(str.substring(0, str.length - 1));
-					}
-				
-				});
-				/*wid.txtOrganization3.on("keyup",function(newValue){
-					var re = /^[a-zA-Z0-9 ]$/i;
-					
-					if(!/^[a-zA-Z0-9 \'\".,?!:;\-\\/()\[\]]+$/.test(wid.txtOrganization3.getValue())){
-						var str=wid.txtOrganization3.getValue();
-						wid.txtOrganization3.setValue(str.substring(0, str.length - 1));
-					}
-				
-				});
-				wid.txtAddress13.on("keyup",function(newValue){
-					var re = /^[a-zA-Z0-9 ]$/i;
-					
-					if(!/^[a-zA-Z0-9 \'\".,?!:;\-\\/()\[\]]+$/.test(wid.txtAddress13.getValue())){
-						var str=wid.txtAddress13.getValue();
-						wid.txtAddress13.setValue(str.substring(0, str.length - 1));
-					}
-				});
-				wid.txtAddress23.on("keyup",function(newValue){
-					var re = /^[a-zA-Z0-9 ]$/i;
-					
-					if(!/^[a-zA-Z0-9 \'\".,?!:;\-\\/()\[\]]+$/.test(wid.txtAddress23.getValue())){
-						var str=wid.txtAddress23.getValue();
-						wid.txtAddress23.setValue(str.substring(0, str.length - 1));
-					}
-				
-				});
-				wid.txtCity3.on("keyup",function(newValue){
-					var re = /^[a-zA-Z0-9 ]$/i;
-					
-					if(!/^[a-zA-Z0-9 \'\".,?!:;\-\\/()\[\]]+$/.test(wid.txtCity3.getValue())){
-						var str=wid.txtCity3.getValue();
-						wid.txtCity3.setValue(str.substring(0, str.length - 1));
-					}
-				
-				});
-				wid.txtState3.on("keyup",function(newValue){
-					var re = /^[a-zA-Z0-9 ]$/i;
-					
-					if(!/^[a-zA-Z0-9 \'\".,?!:;\-\\/()\[\]]+$/.test(wid.txtState3.getValue())){
-						var str=wid.txtState3.getValue();
-						wid.txtState3.setValue(str.substring(0, str.length - 1));
-					}
-				
-				});
-				wid.txtZip3.on("keyup",function(newValue){
-					var re = /^[a-zA-Z0-9 ]$/i;
-					
-					if(!/^[a-zA-Z0-9 \'\".,?!:;\-\\/()\[\]]+$/.test(wid.txtZip3.getValue())){
-						var str=wid.txtZip3.getValue();
-						wid.txtZip3.setValue(str.substring(0, str.length - 1));
-					}
-				
-				});
-				wid.txtCountry3.on("keyup",function(newValue){
-					var re = /^[a-zA-Z0-9 ]$/i;
-					
-					if(!/^[a-zA-Z0-9 \'\".,?!:;\-\\/()\[\]]+$/.test(wid.txtCountry3.getValue())){
-						var str=wid.txtCountry3.getValue();
-						wid.txtCountry3.setValue(str.substring(0, str.length - 1));
-					}
-				
-				});*/
-				/*this.txtOrganization3.on("change",function(e){
+				/*
+				Event handler for organization text box of the debtors details screen
+				Enable/Disable individual name fields according to wheither there is a value in the organization field or not
+				*/
+				this.txtOrganization3.on("change",function(e){
 					if(wid.txtOrganization3.getValue()==''){
 						wid.txtFirstName3.setDisabled(false);
 						wid.txtLastName3.setDisabled(false);
@@ -733,6 +790,11 @@ define(["dojo/_base/declare",
 						wid.txtMiddleName3.setDisabled(true);
 					}
 				});
+				
+				/*
+				Event handler for first name text box of the debtors details screen
+				Enable/Disable organization text box according to wheither there is a value in the individual name fields or not
+				*/
 				this.txtFirstName3.on("change",function(e){
 					if(wid.txtFirstName3.getValue()=='' && wid.txtLastName3.getValue()=='' && wid.txtSuffixName3.getValue()=='' && wid.txtMiddleName3.getValue()==''){
 						wid.txtOrganization3.setDisabled(false);
@@ -741,6 +803,11 @@ define(["dojo/_base/declare",
 						wid.txtOrganization3.setDisabled(true);
 					}
 				});
+				
+				/*
+				Event handler for last name text box of the debtors details screen
+				Enable/Disable organization text box according to wheither there is a value in the individual name fields or not
+				*/
 				this.txtLastName3.on("change",function(e){
 					if(wid.txtFirstName3.getValue()=='' && wid.txtLastName3.getValue()=='' && wid.txtSuffixName3.getValue()=='' && wid.txtMiddleName3.getValue()==''){
 						wid.txtOrganization3.setDisabled(false);
@@ -749,6 +816,11 @@ define(["dojo/_base/declare",
 						wid.txtOrganization3.setDisabled(true);
 					}
 				});
+				
+				/*
+				Event handler for suffix name text box of the debtors details screen
+				Enable/Disable organization text box according to wheither there is a value in the individual name fields or not
+				*/
 				this.txtSuffixName3.on("change",function(e){
 					if(wid.txtFirstName3.getValue()=='' && wid.txtLastName3.getValue()=='' && wid.txtSuffixName3.getValue()=='' && wid.txtMiddleName3.getValue()==''){
 						wid.txtOrganization3.setDisabled(false);
@@ -757,6 +829,11 @@ define(["dojo/_base/declare",
 						wid.txtOrganization3.setDisabled(true);
 					}
 				});
+				
+				/*
+				Event handler for middle name text box of the debtors details screen
+				Enable/Disable organization text box according to wheither there is a value in the individual name fields or not
+				*/
 				this.txtMiddleName3.on("change",function(e){
 					if(wid.txtFirstName3.getValue()=='' && wid.txtLastName3.getValue()=='' && wid.txtSuffixName3.getValue()=='' && wid.txtMiddleName3.getValue()==''){
 						wid.txtOrganization3.setDisabled(false);
@@ -764,7 +841,12 @@ define(["dojo/_base/declare",
 					else{
 						wid.txtOrganization3.setDisabled(true);
 					}
-				});*/
+				});
+				
+				/*
+				Event handler for the tax lien button
+				Retrieves tax payers and lien holders lists and open the dialog
+				*/
 				this.btnTaxLien.on("click",function(e){
 					wid.debtorTabs.selectChild(wid.fillingInfoTab);
 					var selectedIds=new Array();
@@ -786,9 +868,18 @@ define(["dojo/_base/declare",
 					var serviceParams2 = new Object();
 					serviceParams2.input = selectedIds[0].Filing_Number;
 						
-					wid.ddlType.setValue("");
-					wid.initDebtorSecureParty(selectedIds[0].Filing_Number,selectedIds[0].GUID);
+					Request.invokePluginService("eSoSCustomPlugin", "reviewDocService",
+					{
+						requestParams: serviceParams2,
+						synchronous:true,
+						requestCompleteCallback: function(response) {	// success
+							var store = wid.docsDataGrid.store;
+							store.setValue(selectedIds[0], 'Reviewed', 'Yes');
+							wid.docsDataGrid.update();
+						}				
+					});
 					
+					wid.initDebtorSecureParty(selectedIds[0].Filing_Number,selectedIds[0].GUID);
 					theDialog.show();
 					wid.securePartyDataGrid.resize();
 					wid.debtorDataGrid.resize();
@@ -796,6 +887,10 @@ define(["dojo/_base/declare",
 					wid.notesDataGrid.resize();
 				});
 				
+				/*
+				Event handler for the double click action of debtors grid 
+				Retrieves the details of the selected debtor and opens the dialog
+				*/
 				this.debtorDataGrid.on("RowDblClick",function(evt){
 					var idx = evt.rowIndex;
 					var rowData = wid.debtorDataGrid.getItem(idx);
@@ -810,26 +905,10 @@ define(["dojo/_base/declare",
 					
 				});
 					
-				this.btnViewDeptor.on("click",function(e){
-					var selectedIds=new Array();
-					var selectedTypes=new Array();
-
-					array.forEach(wid.debtorDataGrid.selection.getSelected(), function(row){
-						selectedIds.push(row.debtorId);
-						selectedTypes.push(row.FromEsos);
-					});
-					
-					wid.initDebtorSecurePartyDetails(selectedIds[0],selectedTypes[0]);
-					wid.txtDebtorType.value="Debitor";
-					domStyle.set(wid.btnSearchDeptor.domNode, 'display', 'none');
-					if(wid.txtDialogType.value=="Debtor")
-						deptorDetailsDialog.set("title","Debtor Details");
-					else
-						deptorDetailsDialog.set("title","Tax Payer Details");
-					deptorDetailsDialog.show();
-					
-				});
-				
+				/*
+				Event handler for add debtor button
+				Opens dialog to capture the information of the new debtor to be added
+				*/
 				this.btnAddDeptor.on("click",function(e){
 					domStyle.set(wid.btnSearchDeptor.domNode, 'display', '');
 					if(wid.txtDialogType.value=="Debtor"){
@@ -856,13 +935,15 @@ define(["dojo/_base/declare",
 					wid.txtState3.setValue("NV");
 					wid.txtZip3.setValue("");
 					wid.txtCountry3.setValue("");
-					//wid.txtPhone3.setValue("");
-					//wid.txtEmail3.setValue("");
-					
 					deptorDetailsDialog.show();
 					wid.txtDebtorType.value="Debitor";
 					wid.txtDebtorId.value="0";
 				});
+				
+				/*
+				Event handler for the double click action of secured parties grid 
+				Retrieves the details of the selected secured party and opens the dialog
+				*/
 				this.securePartyDataGrid.on("RowDblClick",function(evt){
 					var idx = evt.rowIndex;
 					var rowData = wid.securePartyDataGrid.getItem(idx);
@@ -876,22 +957,11 @@ define(["dojo/_base/declare",
 					deptorDetailsDialog.show();
 					
 				});
-				this.btnViewSecureParty.on("click",function(e){
-					var selectedIds=new Array();
-					var selectedTypes=new Array();
-					array.forEach(wid.securePartyDataGrid.selection.getSelected(), function(row){
-						selectedIds.push(row.securePartyId);
-						selectedTypes.push(row.FromEsos);
-					});
-					wid.initDebtorSecurePartyDetails(selectedIds[0],selectedTypes[0]);
-					wid.txtDebtorType.value="Secured Party";
-					domStyle.set(wid.btnSearchDeptor.domNode, 'display', 'none');
-					if(wid.txtDialogType.value=="Debtor")
-						deptorDetailsDialog.set("title","Secured Party Details");
-					else
-						deptorDetailsDialog.set("title","Lien Holder Details");
-					deptorDetailsDialog.show();
-				});
+				
+				/*
+				Event handler for add secured party button
+				Opens dialog to capture the information of the new secured party to be added
+				*/
 				this.btnAddSecureParty.on("click",function(e){
 					domStyle.set(wid.btnSearchDeptor.domNode, 'display', '');
 					wid.txtDebtorType.value="Secured Party";
@@ -910,8 +980,6 @@ define(["dojo/_base/declare",
 					wid.txtState3.setValue("NV");
 					wid.txtZip3.setValue("");
 					wid.txtCountry3.setValue("");
-					//wid.txtPhone3.setValue("");
-					//wid.txtEmail3.setValue("");
 					
 					if(wid.txtDialogType.value=="Debtor"){
 						deptorDetailsDialog.set("title","Add New Secured Party");
@@ -924,8 +992,11 @@ define(["dojo/_base/declare",
 					wid.txtDebtorId.value="0";
 				});
 				
+				/*
+				Event handler for copy debtor button
+				Retrieves the details of the selected debtor and open a dialog displaying that details to be added as a secured party
+				*/
 				this.btnCopyDebtor.on("click",function(e){
-					
 					var selectedIds=new Array();
 					var selectedTypes=new Array();
 					
@@ -955,9 +1026,11 @@ define(["dojo/_base/declare",
 					
 				});
 				
+				/*
+				Event handler for copy secured party button
+				Retrieves the details of the selected secured party and open a dialog displaying that details to be added as a debtor
+				*/
 				this.btnCopySecuredParty.on("click",function(e){
-					
-					
 					var selectedIds=new Array();
 					var selectedTypes=new Array();
 
@@ -979,13 +1052,17 @@ define(["dojo/_base/declare",
 						searchDeptorDialog.set("title","Find a Lien Holder");
 					}
 					deptorDetailsDialog.show();
-					wid.txtDebtorId.value="0";
+					wid.txtDebtorId.value="1";
 					if(wid.txtDialogType.value=="TaxLien")
 						wid.ddlTaxTypes.setValue("Tax Payer");
 					else
 						wid.ddlDebtorTypes.setValue("Debtor");
 				});
 				
+				/*
+				Event handler for copy to sentto button
+				Copies the information of submitter tab to sentto tab
+				*/
 				this.btnCopyToSentTo.on("click",function(e){
 					wid.txtFirstName2.setValue(wid.txtFirstName.getValue());
 					wid.txtMiddleName2.setValue(wid.txtMiddleName.getValue());
@@ -1002,47 +1079,40 @@ define(["dojo/_base/declare",
 					wid.txtEmail2.setValue(wid.txtEmail.getValue());
 					wid.submitterInfoTabs.selectChild(wid.sentToTab);
 				});
+				
+				/*
+				Event handler for find submitter button
+				Opens a dialog to search for submitter
+				*/
 				this.btnFindSubmitter.on("click",function(e){
 					wid.txtSearchType.value="Submitter";
 					searchDeptorDialog.set("title","Find a Submitter");
-					wid.organizationRadio.setChecked(true);
-					wid.nameRadio.setChecked(true);
-					wid.txtOrganizationSearch.setValue("");
-					wid.txtAccountNumberSearch.setValue("");
-					wid.txtLastNameSearch.setValue("");
-					wid.txtFirstNameSearch.setValue("");
-					wid.txtMiddleNameSearch.setValue("");
-					var newStore = new dojo.data.ItemFileReadStore({data: {  identifier: "",  items: []}});  
-					wid.searchDataGrid.setStore(newStore); 
 					searchDeptorDialog.show();
 				});
+				
+				/*
+				Event handler for find sentto button
+				Opens a dialog to search for sentto
+				*/
 				this.btnFindSentTo.on("click",function(e){
 					wid.txtSearchType.value="SentTo";
 					searchDeptorDialog.set("title","Find a Submitter");
-					wid.organizationRadio.setChecked(true);
-					wid.nameRadio.setChecked(true);
-					wid.txtOrganizationSearch.setValue("");
-					wid.txtAccountNumberSearch.setValue("");
-					wid.txtLastNameSearch.setValue("");
-					wid.txtFirstNameSearch.setValue("");
-					wid.txtMiddleNameSearch.setValue("");
-					var newStore = new dojo.data.ItemFileReadStore({data: {  identifier: "",  items: []}});  
-					wid.searchDataGrid.setStore(newStore); 
 					searchDeptorDialog.show();
 				});
+				
+				/*
+				Event handler for find submitter button
+				Opens a dialog to search for debtor
+				*/
 				this.btnSearchDeptor.on("click",function(e){
 					wid.txtSearchType.value="Debtor";
-					wid.organizationRadio.setChecked(true);
-					wid.nameRadio.setChecked(true);
-					wid.txtOrganizationSearch.setValue("");
-					wid.txtAccountNumberSearch.setValue("");
-					wid.txtLastNameSearch.setValue("");
-					wid.txtFirstNameSearch.setValue("");
-					wid.txtMiddleNameSearch.setValue("");
-					var newStore = new dojo.data.ItemFileReadStore({data: {  identifier: "",  items: []}});  
-					wid.searchDataGrid.setStore(newStore); 
 					searchDeptorDialog.show();
 				});
+				
+				/*
+				Event handler for copy to submitter button
+				Copy the information of a debtor to the submitter tab
+				*/
 				this.btnCopySubmitter.on("click",function(e){
 					wid.txtFirstName.setValue(wid.txtFirstName3.getValue());
 					wid.txtMiddleName.setValue(wid.txtMiddleName3.getValue());
@@ -1060,15 +1130,14 @@ define(["dojo/_base/declare",
 					wid.mainTabs.selectChild(wid.submitterInfo);
 					wid.submitterInfoTabs.selectChild(wid.submitterTab);
 				});
+				
+				/*
+				Event handler for save debtor button
+				Adding a new debtor using the entered information
+				*/
 				this.btnSaveDeptor.on("click",function(e){
-					if((wid.txtFirstName3.getValue()!='' ||  wid.txtLastName3.getValue()!='' || wid.txtSuffixName3.getValue()!='' || wid.txtMiddleName3.getValue()!='') && wid.txtOrganization3.getValue() != ''){
-						alert("You can't enter individual and organization names together please enter one of them only !!!");
-					}
-					else if(wid.txtCity3.getValue()=="" || wid.txtState3.getValue()=="")
+					if(wid.txtCity3.getValue()=="" || wid.txtState3.getValue()=="")
 						alert("State and City can't be empty");
-					else if(wid.txtAddress13.getValue()==null || wid.txtAddress13.getValue() == ''){
-						alert("Please enter address 1");
-					}
 					else{
 						var typeName=wid.txtDebtorType.value;
 						var typeCode=1;
@@ -1092,17 +1161,15 @@ define(["dojo/_base/declare",
 						var jsonStr='{"FirstName":"'+wid.txtFirstName3.getValue()+'","MiddleInitial":"'+wid.txtMiddleName3.getValue()+'","LastName":"'+wid.txtLastName3.getValue()+'","Suffix":"'+wid.txtSuffixName3.getValue()+'","Orgnization":"'+wid.txtOrganization3.getValue()+'","Address_1":"'+wid.txtAddress13.getValue()+'","Address_2":"'+
 						
 						wid.txtAddress23.getValue()+'","City":"'+wid.txtCity3.getValue()+'","Zip":"'+wid.txtZip3.getValue()+'","State":"'+wid.txtState3.getValue()+'","Country":"'+wid.txtCountry3.getValue()
-					//	+'","Email":"'+wid.txtEmail3.getValue()+'","Phone":"'+wid.txtPhone3.getValue()
 						+'","TypeCode":"'+typeCode+'","TypeName":"'+typeName+'","FillingId":"'+wid.txtFillingKey.value+'","DebtorId":"'+wid.txtDebtorId.value+'","FromEsos":'+(wid.isFoS.value=='true'?true:false)+',"ModifiedBy":"'+repository.userId+'"}';
 						serviceParams.input = jsonStr;
-						Request.invokePluginService("claimCustomPlugin", "saveDebtorService",
+						Request.invokePluginService("eSoSCustomPlugin", "saveDebtorService",
 						{
 							requestParams: serviceParams,
 							synchronous:true,
 							requestCompleteCallback: function(response) {
 								var jsonResponse=dojo.toJson(response, true, "  ");
 								var obj = JSON.parse(jsonResponse);
-							//	alert("Done");
 								deptorDetailsDialog.hide();
 								var newName=wid.txtOrganization3.getValue();
 								var address=wid.txtAddress13.getValue();
@@ -1112,23 +1179,21 @@ define(["dojo/_base/declare",
 									address=address+" "+wid.txtCity3.getValue();
 								if(wid.txtState3.getValue() && wid.txtState3.getValue() != '')
 									address=address+" "+wid.txtState3.getValue();
+								if(wid.txtCountry3.getValue() && wid.txtCountry3.getValue() != '')
+									address=address+" "+wid.txtCountry3.getValue();
 								if(wid.txtZip3.getValue() && wid.txtZip3.getValue() != '')
 									address=address+" "+wid.txtZip3.getValue();
-								if(wid.txtCountry3.getValue() && wid.txtCountry3.getValue() != '')
-									address=address+" "+wid.txtCountry3.getValue();								
+								
 								if(!newName || newName== ''){
 									newName=wid.txtFirstName3.getValue()+" "+wid.txtMiddleName3.getValue()+" "+wid.txtLastName3.getValue()+" "+wid.txtSuffixName3.getValue();
 								}
-								//deptorDetailsDialog.set("title","Add New Debtor");
 								if(deptorDetailsDialog.get("title").toString().contains("Add New") ){
 									if(typeCode=="1"){
 										var newSequence;
-										console.log(wid.debtorDataGrid);
-										console.log(wid.debtorDataGrid.store._arrayOfTopLevelItems.length);
-										if(wid.debtorDataGrid.store._arrayOfTopLevelItems.length==0 || (wid.debtorDataGrid.store._arrayOfTopLevelItems[0]==null))
+										if(wid.debtorDataGrid.store._arrayOfAllItems.length==0)
 											newSequence=1;
 										else{
-											var lastItem=wid.debtorDataGrid.store._arrayOfTopLevelItems[wid.debtorDataGrid.store._arrayOfTopLevelItems.length-1];
+											var lastItem=wid.debtorDataGrid.store._arrayOfAllItems[wid.debtorDataGrid.store._arrayOfAllItems.length-1];
 											newSequence=parseInt(lastItem.Sequence)+1;
 										}
 										var myNewItem = {debtorId: obj.DebitorId, rowType: "new",name: newName.toString().toUpperCase(),address:address.toString().toUpperCase(),FromEsos:"false",IsEditable:"true",Sequence:newSequence};
@@ -1136,10 +1201,10 @@ define(["dojo/_base/declare",
 									}
 									else{
 										var newSequence;
-										if(wid.securePartyDataGrid.store._arrayOfTopLevelItems.length==0)
+										if(wid.securePartyDataGrid.store._arrayOfAllItems.length==0)
 											newSequence=1;
 										else{
-											var lastItem=wid.securePartyDataGrid.store._arrayOfTopLevelItems[wid.securePartyDataGrid.store._arrayOfTopLevelItems.length-1];
+											var lastItem=wid.securePartyDataGrid.store._arrayOfAllItems[wid.securePartyDataGrid.store._arrayOfAllItems.length-1];
 											newSequence=parseInt(lastItem.Sequence)+1;
 										}
 										var myNewItem = {securePartyId: obj.DebitorId, rowType: "new",name: newName.toString().toUpperCase(),address:address.toString().toUpperCase(),FromEsos:"false",IsEditable:"true",Sequence:newSequence};
@@ -1190,17 +1255,16 @@ define(["dojo/_base/declare",
 							}
 						});
 					}
+
 				});
+				
+				/*
+				Event handler for filing details save button
+				Save the information of the filing
+				*/
 				this.btnSaveZDialog.on("click",function(e){
-					
 					if(theDialog.get("title") == 'Tax Payer' && (wid.ddlType.getValue()==null || wid.ddlType.getValue() == '')){
 						alert("Please select a type");
-					}
-					else if(theDialog.get("title") == 'Tax Payer' && wid.debtorDataGrid.store._arrayOfTopLevelItems.length==0){
-						alert("Please enter at least one tax payer");
-					}
-					else if(theDialog.get("title") == 'Debtors/Secured Parties' && (wid.debtorDataGrid.store._arrayOfTopLevelItems.length==0 || wid.securePartyDataGrid.store._arrayOfTopLevelItems.length==0)){
-						alert("Please enter at least one debtor and one secured party");
 					}
 					else if(wid.txtIFSN.getValue()==null || wid.txtIFSN.getValue() == ''){
 						alert("Please enter IFSN");
@@ -1209,23 +1273,6 @@ define(["dojo/_base/declare",
 						alert("Please select an action");
 					}
 					else{
-						
-						if(wid.ddlAction.getValue()=='Assignment'){
-							var securedPartyAdded=false;
-							for(var i=0;i<wid.securePartyDataGrid.store._arrayOfTopLevelItems.length;i++){
-								if(wid.securePartyDataGrid.store._arrayOfTopLevelItems[i]==null)
-									continue;
-								var currItem=wid.securePartyDataGrid.store._arrayOfTopLevelItems[i];
-								if(currItem.FromEsos=='false'){
-									securedPartyAdded=true;
-									break;
-								}
-							}
-							if(!securedPartyAdded){
-								alert("You have to add at least 1 secured party");
-								return;
-							}
-						}
 						var serviceParams = new Object();
 						var ProcessedBy=wid.ProcessedBy.value;
 						if(!ProcessedBy)
@@ -1248,64 +1295,39 @@ define(["dojo/_base/declare",
 							jsonStr='{"FillingID":'+wid.txtFillingKey.value+',"FillingDate":"'+wid.txtFillingDate.getDisplayedValue()+'","FilingTime":"'+wid.txtFillingTime.getDisplayedValue()+'","NumPages":"'+wid.NumPages.value+'","ProcessedBy":"'+repository.userId+'","VerifiedBy":"'+repository.userId+'","ModifiedBy":"'+repository.userId+'","FileID":"'+wid.txtFillingId.getValue()+'","IFSN":"'+wid.txtIFSN.getValue()+'","Status":"'+wid.txtStatus.getValue()+'","LapseDate":"'+wid.txtLapseDate.getValue()+'","FormType":"'+wid.txtFormType.getValue()+'","JobNumber":"'+wid.jobNumber+'","IsFOS":'+(wid.isFoS.value=='true'?true:false)+',"DocAction":"'+
 							wid.ddlType.getValue()+'","Type":"'+wid.ddlAction.getValue()+'","Debitors":[';
 						}
-						for(var i=0;i<wid.debtorDataGrid.store._arrayOfTopLevelItems.length;i++){
-							if(wid.debtorDataGrid.store._arrayOfTopLevelItems[i]==null)
-								continue;
-							var currItem=wid.debtorDataGrid.store._arrayOfTopLevelItems[i];
+						for(var i=0;i<wid.debtorDataGrid.store._arrayOfAllItems.length;i++){
+							var currItem=wid.debtorDataGrid.store._arrayOfAllItems[i];
 							var fromOCR=currItem.FromOCR;
 							if(!fromOCR || fromOCR=="")
 								fromOCR="false";
-							if(i!=0)
-								jsonStr+=',';
 							jsonStr+='{"DebtorId":'+currItem.debtorId+',"Name":"'+currItem.name+'","Address_1":"'+currItem.address+'","IsEditable":'+currItem.IsEditable+',"FromEsos":'+currItem.FromEsos+',"FromOCR":'+fromOCR+',"Sequence":'+currItem.Sequence+'}';
-							
+							if(i!=(wid.debtorDataGrid.store._arrayOfAllItems.length-1))
+								jsonStr+=',';
 						}
 						jsonStr+='],"SecuredParties":[';
-						for(var j=0;j<wid.securePartyDataGrid.store._arrayOfTopLevelItems.length;j++){
-							if(wid.securePartyDataGrid.store._arrayOfTopLevelItems[j]==null)
-								continue;
-							var currItem=wid.securePartyDataGrid.store._arrayOfTopLevelItems[j];
-							if(j!=0)
+						for(var j=0;j<wid.securePartyDataGrid.store._arrayOfAllItems.length;j++){
+							var currItem=wid.securePartyDataGrid.store._arrayOfAllItems[j];
+							var fromOCR=currItem.FromOCR;
+							if(!fromOCR || fromOCR=="")
+								fromOCR="false";
+							jsonStr+='{"DebtorId":'+currItem.securePartyId+',"Name":"'+currItem.name+'","Address_1":"'+currItem.address+'","IsEditable":'+currItem.IsEditable+',"FromEsos":'+currItem.FromEsos+',"FromOCR":'+fromOCR+',"Sequence":'+currItem.Sequence+'}';
+							if(j!=(wid.securePartyDataGrid.store._arrayOfAllItems.length-1))
 								jsonStr+=',';
-							if(currItem.securePartyId==-1){
-								var repository2=wid.getSolution().getTargetOS();
-								var serviceParams = new Object();
-								var jsonStr2='{"FirstName":"","MiddleInitial":"","LastName":"","Suffix":"","Orgnization":"INTERNAL REVENUE SERVICE","Address_1":"P.O. BOX 145595","Address_2":"","City":"CINCINNATI","Zip":"45250-5595","State":"OH","Country":"","TypeCode":"0","TypeName":"Secured Party","FillingId":"'+wid.txtFillingKey.value+'","DebtorId":"0","FromEsos":false,"ModifiedBy":"'+repository2.userId+'"}';
-								serviceParams.input = jsonStr2;
-								Request.invokePluginService("claimCustomPlugin", "saveDebtorService",
-								{
-									requestParams: serviceParams,
-									synchronous:true,
-									requestCompleteCallback: function(response) {
-										var jsonResponse=dojo.toJson(response, true, "  ");
-										var obj = JSON.parse(jsonResponse);
-									}
-								});
-							}
-							else{
-								var fromOCR=currItem.FromOCR;
-								if(!fromOCR || fromOCR=="")
-									fromOCR="false";
-								jsonStr+='{"DebtorId":'+currItem.securePartyId+',"Name":"'+currItem.name+'","Address_1":"'+currItem.address+'","IsEditable":'+currItem.IsEditable+',"FromEsos":'+currItem.FromEsos+',"FromOCR":'+fromOCR+',"Sequence":'+currItem.Sequence+'}';
-							}
-							
 						}
 						jsonStr+=']}';
 						serviceParams.input = jsonStr;
 						repository.retrieveItem(wid.txtGUID.value, lang.hitch(wid, function(retItem) {
-							
-							var properties = [{"name": "DocumentTitle","value" : wid.txtFillingId.getValue()},{"name": "ESOS_Redaction_Reviewed","value" : true}];
+							var properties = [{"name": "DocumentTitle","value" : wid.txtFillingId.getValue()}];
 							retItem.saveAttributes(properties,retItem.template,null,null,false,function(response) {
-								console.log(retItem);
-								Request.invokePluginService("claimCustomPlugin", "saveDebitorsService",
+								Request.invokePluginService("eSoSCustomPlugin", "saveDebitorsService",
 								{
 									requestParams: serviceParams,
 									synchronous:true,
 									requestCompleteCallback: function(response) {
 										var jsonResponse=dojo.toJson(response, true, "  ");
 										var obj = JSON.parse(jsonResponse);
-										if(obj.Done==false || obj.Done=='false'){
-											alert(obj.Error);
+										if(obj.done==false || obj.done=='false'){
+											alert(obj.error);
 										}
 										else{
 											var store = wid.docsDataGrid.store;
@@ -1313,36 +1335,7 @@ define(["dojo/_base/declare",
 											store.setValue(wid.docsDataGrid.selection.getSelected()[0], 'Filing_Date', wid.txtFillingDate.getDisplayedValue()+", "+wid.txtFillingTime.getDisplayedValue());
 											store.setValue(wid.docsDataGrid.selection.getSelected()[0], 'Filing_Status', wid.txtStatus.getValue());
 											wid.docsDataGrid.update();
-											var selectedIds=new Array();
-											array.forEach(wid.docsDataGrid.selection.getSelected(), function(row){
-												selectedIds.push(row);
-											});
-											wid.txtDialogType.value="Debtor";
-											var serviceParams2 = new Object();
-											serviceParams2.input = selectedIds[0].Filing_Number;
-											
-											Request.invokePluginService("claimCustomPlugin", "reviewDocService",
-											{
-												requestParams: serviceParams2,
-												synchronous:true,
-												requestCompleteCallback: function(response) {	// success
-													var store = wid.docsDataGrid.store;
-													store.setValue(selectedIds[0], 'Reviewed', 'Yes');
-													wid.docsDataGrid.update();
-													theDialog.hide();
-												}				
-											});
-											
-											/*var serviceParams2 = new Object();
-											serviceParams2.input = wid.jobNumber;
-											serviceParams2.input2 = wid.txtFillingId.getValue();
-											Request.invokePluginService("claimCustomPlugin", "calculateChargesService",
-											{
-												requestParams: serviceParams2,
-												synchronous:true,
-												requestCompleteCallback: function(response) {
-												}
-											});*/
+											theDialog.hide();
 										}
 									}
 								});
@@ -1350,6 +1343,11 @@ define(["dojo/_base/declare",
 						}));
 					}
 				});
+				
+				/*
+				Event handler for find debtor button
+				Search for customer using the entered search criteria
+				*/
 				this.btnFindDeptor.on("click",function(e){
 					var searchType;
 					if(wid.txtSearchType.value=="Submitter" || wid.txtSearchType.value=="SentTo"){
@@ -1369,10 +1367,10 @@ define(["dojo/_base/declare",
 					}
 
 					var serviceParams = new Object();
-					var jsonStr='{"IsOrganization":'+wid.organizationRadio.checked+',"SearchType":'+searchType+',"IsName":'+wid.nameRadio.checked+',"WildCard":'+true+',"Soundex":'+true+',"OrganizationName":"'+wid.txtOrganizationSearch.getValue()+'","FirstName":"'+wid.txtFirstNameSearch.getValue()+'","Initial":"'+
+					var jsonStr='{"IsOrganization":'+wid.organizationRadio.checked+',"SearchType":'+searchType+',"IsName":'+wid.nameRadio.checked+',"WildCard":'+wid.wildcardCheck.checked+',"Soundex":'+wid.soundexCheck.checked+',"OrganizationName":"'+wid.txtOrganizationSearch.getValue()+'","FirstName":"'+wid.txtFirstNameSearch.getValue()+'","Initial":"'+
 					wid.txtMiddleNameSearch.getValue()+'","LastName":"'+wid.txtLastNameSearch.getValue()+'","AccountNumber":"'+wid.txtAccountNumberSearch.getValue()+'"}';
 					serviceParams.input = jsonStr;
-					Request.invokePluginService("claimCustomPlugin", "searchDebtorService",
+					Request.invokePluginService("eSoSCustomPlugin", "searchDebtorService",
 					{
 						requestParams: serviceParams,
 						synchronous:true,
@@ -1417,20 +1415,20 @@ define(["dojo/_base/declare",
 							var store = new ItemFileWriteStore({data: data});
 							wid.searchDataGrid.setStore(store);
 							var layout = [[
-							  {'name': 'id', 'field': 'CustomerId', 'hidden':true,'noresize': true},
-							  {'name': 'First Name', 'field': 'FirstName', 'width': '10%','noresize': true},
-							  {'name': 'Last Name', 'field': 'LastName', 'width': '10%','noresize': true},
-							  {'name': 'Middle Initial', 'field': 'MiddleInitial', 'width': '10%','noresize': true},
-							  {'name': 'Suffix', 'field': 'Suffix', 'width': '10%','noresize': true},
-							  {'name': 'Organization', 'field': 'Orgnization', 'width': '10%','noresize': true},
-							  {'name': 'Address 1', 'field': 'Address_1', 'width': '10%','noresize': true},
-							  {'name': 'Address 2', 'field': 'Address_2', 'width': '10%','noresize': true},
-							  {'name': 'Country', 'field': 'Country', 'width': '10%','noresize': true},
-							  {'name': 'City', 'field': 'City', 'width': '10%','noresize': true},
-							  {'name': 'State', 'field': 'State', 'width': '10%','noresize': true},
-							  {'name': 'Zip', 'field': 'Zip', 'width': '10%','noresize': true},
-							  {'name': 'Phone', 'field': 'Phone', 'width': '10%','noresize': true},
-							  {'name': 'Email', 'field': 'Email', 'width': '10%','noresize': true}
+							  {'name': 'id', 'field': 'CustomerId', 'hidden':true},
+							  {'name': 'First Name', 'field': 'FirstName', 'width': '10%'},
+							  {'name': 'Last Name', 'field': 'LastName', 'width': '10%'},
+							  {'name': 'Middle Initial', 'field': 'MiddleInitial', 'width': '10%'},
+							  {'name': 'Suffix', 'field': 'Suffix', 'width': '10%'},
+							  {'name': 'Organization', 'field': 'Orgnization', 'width': '10%'},
+							  {'name': 'Address 1', 'field': 'Address_1', 'width': '10%'},
+							  {'name': 'Address 2', 'field': 'Address_2', 'width': '10%'},
+							  {'name': 'Country', 'field': 'Country', 'width': '10%'},
+							  {'name': 'City', 'field': 'City', 'width': '10%'},
+							  {'name': 'State', 'field': 'State', 'width': '10%'},
+							  {'name': 'Zip', 'field': 'Zip', 'width': '10%'},
+							  {'name': 'Phone', 'field': 'Phone', 'width': '10%'},
+							  {'name': 'Email', 'field': 'Email', 'width': '10%'}
 							  
 							]];
 							wid.searchDataGrid.setStructure(layout);
@@ -1438,11 +1436,15 @@ define(["dojo/_base/declare",
 					});
 				});
 				
+				/*
+				Event handler for add note button
+				Add a new note using the entered information
+				*/
 				this.btnAddNote.on("click",function(e){
 					var serviceParams = new Object();
 					var jsonStr='{"FillingId":'+wid.txtFillingKey.value+',"User":"'+wid.getSolution().getTargetOS().userId+'","IsFOS":'+(wid.isFoS.value=='true'?true:false)+',"Note":"'+wid.txtNewNote.getValue()+'"}';
 					serviceParams.input = jsonStr;
-					Request.invokePluginService("claimCustomPlugin", "addNoteService",
+					Request.invokePluginService("eSoSCustomPlugin", "addNoteService",
 					{
 						requestParams: serviceParams,
 						synchronous:true,
@@ -1465,33 +1467,14 @@ define(["dojo/_base/declare",
 					});
 				});
 				
+				/*
+				Event handler for filing type drop down list
+				Change the lapse date according to the selected type
+				In case of tax lien filings set IFSN according to the selected type
+				*/
 				this.ddlType.on("change",function(newValue){
-					if(newValue=="")
-						return;
-					var formType=wid.txtFormType.getValue();
-					if(formType=="FOS" || formType == "UCC3" || formType == "UCC5")
-						return
-					if(theDialog.get("title") == 'Tax Payer'){
-						if(newValue != "Notice of Federal Tax Lien" && wid.txtIFSN.getValue()==''){
-							alert("please enter IFSN first");
-							wid.ddlType.setValue("");
-							return;
-						}
-					}
 					var currDate=new Date(wid.txtFillingDate.getDisplayedValue());
-									
 					var lapsePeriod=wid.lapsePeriods[newValue];
-					if(theDialog.get("title") == 'Tax Payer' && lapsePeriod == '20'){
-						var initialTaxDate=wid.txtFillingDate.getDisplayedValue();
-						for(var i=0;i<wid.historyDataGrid.store._arrayOfTopLevelItems.length;i++){
-							var currItem=wid.historyDataGrid.store._arrayOfTopLevelItems[i];
-							if(currItem.Action=='Tax Lien Original Filing'){
-								initialTaxDate=currItem.FilingDate;
-								break;
-							}
-						}
-						currDate=new Date(initialTaxDate);
-					}
 					if(lapsePeriod)
 						currDate.setFullYear(currDate.getFullYear()+parseInt(lapsePeriod));
 					else
@@ -1500,7 +1483,6 @@ define(["dojo/_base/declare",
 						currDate.setMonth(currDate.getMonth()+1);
 						
 					}
-					
 					var curr_day = currDate.getDate();
 					var curr_month = currDate.getMonth()+1;
 					var curr_year = currDate.getFullYear();
@@ -1508,15 +1490,8 @@ define(["dojo/_base/declare",
 						curr_day="0"+curr_day;
 					if(curr_month<10)
 						curr_month="0"+curr_month;
-					
-					if(lapsePeriod){
-						wid.lastLapse=wid.txtLapseDate.getValue();
+					if(lapsePeriod)
 						wid.txtLapseDate.setValue(curr_month+"/"+curr_day+"/"+curr_year);
-					}
-					else if(wid.lastLapse != null && wid.lastLapse!="")
-						wid.txtLapseDate.setValue(wid.lastLapse);
-					if(newValue=='Transmitting Utility')
-						wid.txtLapseDate.setValue("");
 					if(theDialog.get("title") == 'Tax Payer'){
 						if(newValue == "Notice of Federal Tax Lien"){
 							wid.txtIFSN.setValue(wid.txtFillingId.getValue());
@@ -1530,99 +1505,13 @@ define(["dojo/_base/declare",
 							}
 						}
 					}
-					//else
-						//wid.txtLapseDate.setValue("");
+					
 				});
 				
-				this.ddlAction.on("change",function(newValue){
-					console.log(wid.txtApplyAction.value);
-					if(wid.txtApplyAction.value=='true'){
-						var ucc1Date=wid.txtFillingDate.getDisplayedValue();
-						if(wid.historyDataGrid.store)
-						for(var i=0;i<wid.historyDataGrid.store._arrayOfTopLevelItems.length;i++){
-							var currItem=wid.historyDataGrid.store._arrayOfTopLevelItems[i];
-							if(currItem.Action=='Initial Financing Statement'){
-								ucc1Date=currItem.FilingDate;
-								break;
-							}
-						}
-						console.log(wid.txtFormType.getValue());
-						if(wid.txtFormType.getValue()=="UCC3"){
-							console.log(wid.ddlAction.getValue())					  ;
-							if(wid.ddlAction.getValue()=='Continuation'){
-								var continuationExists=false;
-								console.log(wid.historyDataGrid.store._arrayOfAllItems.length);
-								for(var j=0;j<wid.historyDataGrid.store._arrayOfAllItems.length;j++){
-									var currItem=wid.historyDataGrid.store._arrayOfAllItems[j];
-									if(currItem.Action=='Continuation'){
-										continuationExists=true;
-										break;
-									}
-								}
-								console.log(continuationExists);
-								
-								if(continuationExists){
-									var currLapse=new Date(wid.txtLapseDate.getValue());
-									var currDate=new Date();
-									currLapse.setYear(currLapse.getYear()-5);
-									
-									if(currDate < currLapse){
-										return;
-									}
-								}
-								var currLapse;
-								var startDate;
-								if(!continuationExists){
-									currLapse=new Date(wid.txtLapseDate.getValue());
-									startDate=new Date(wid.txtLapseDate.getValue());
-								}
-								else{
-									currLapse=new Date(wid.txtLapseDate.getValue());
-									
-									currLapse.setYear(currLapse.getFullYear()-5);
-									startDate=new Date(wid.txtLapseDate.getValue());
-									startDate.setYear(startDate.getFullYear()-5);
-								}
-								currLapse.setHours(23);
-								currLapse.setMinutes(59);
-								
-								startDate.setMonth(startDate.getMonth()-6);
-								var currDate=new Date();
-								var currType=wid.ddlType.getValue();
-								console.log(startDate);
-								console.log(currDate);
-								console.log(currLapse);
-								if(currType=='Manufactured Home' || currType=='Public Financing' || currType=='Financing Statement'){
-									if(!(startDate <= currDate && currDate <= currLapse)){
-										alert("this does not fall within continuation period");
-										wid.ddlAction.setValue("");
-									}
-									else{
-										currLapse.setYear(currLapse.getFullYear()+5);
-										console.log(currLapse);
-										var curr_day = currLapse.getDate();
-										var curr_month = currLapse.getMonth()+1;
-										var curr_year = currLapse.getFullYear();
-										console.log(curr_day);
-										console.log(curr_month);
-										console.log(curr_year);
-										if(curr_day<10)
-											curr_day="0"+curr_day;
-										if(curr_month<10)
-											curr_month="0"+curr_month;
-										
-										wid.txtLapseDate.setValue(curr_month+"/"+curr_day+"/"+curr_year);
-									}
-								}
-							}
-						}
-					}else{
-						console.log("before "+wid.txtApplyAction.value);
-						wid.txtApplyAction.value="true";
-						console.log("after "+wid.txtApplyAction.value);
-					}
-				});
-				
+				/*
+				Event handler for filing date field
+				Change the lapse date according to the selected filing date
+				*/
 				this.txtFillingDate.on("change",function(newValue){
 					var currDate=new Date(newValue);
 					var lapsePeriod=wid.lapsePeriods[wid.ddlType.getValue()];
@@ -1640,15 +1529,14 @@ define(["dojo/_base/declare",
 						curr_day="0"+curr_day;
 					if(curr_month<10)
 						curr_month="0"+curr_month;
-					if(lapsePeriod){
-						wid.lastLapse=wid.txtLapseDate.getValue();
+					if(lapsePeriod)
 						wid.txtLapseDate.setValue(curr_month+"/"+curr_day+"/"+curr_year);
-						
-					}
-					else if(wid.lastLapse != null && wid.lastLapse!="")
-						wid.txtLapseDate.setValue(wid.lastLapse);
 				});
 				
+				/*
+				Event handler for individual radio button
+				When checked hide the organization search criteria field and show individual name search criteria fields
+				*/
 				this.individualRadio.on("change",function(newValue){
 					if(wid.individualRadio.checked){
 						domStyle.set(wid.individualSearch1, 'display', '');
@@ -1658,6 +1546,10 @@ define(["dojo/_base/declare",
 					}
 				});
 				
+				/*
+				Event handler for organization radio button
+				When checked hide the individual name search criteria fields and show organization search criteria field
+				*/
 				this.organizationRadio.on("change",function(newValue){
 					if(wid.organizationRadio.checked){
 						domStyle.set(wid.individualSearch1, 'display', 'none');
@@ -1667,6 +1559,10 @@ define(["dojo/_base/declare",
 					}
 				});
 				
+				/*
+				Event handler for name radio button
+				When checked hide search by account number field and show organization or individual name search criteria fields
+				*/
 				this.nameRadio.on("change",function(newValue){
 					if(wid.nameRadio.checked){
 						if(wid.individualRadio.checked){
@@ -1685,6 +1581,11 @@ define(["dojo/_base/declare",
 					}
 				});
 				
+				
+				/*
+				Event handler for Billing Account Number radio button
+				When checked hide organization and individual name search criteria fields and show search by account number field
+				*/
 				this.billingRadio.on("change",function(newValue){
 					if(wid.billingRadio.checked){
 						domStyle.set(wid.individualSearch1, 'display', 'none');
@@ -1695,6 +1596,10 @@ define(["dojo/_base/declare",
 					}
 				});
 				
+				/*
+				Event handler for search results grid double click
+				Set information of submitter,debtor or secured party using the information of the clicked row
+				*/
 				this.searchDataGrid.on("RowDblClick",function(evt){
 					var idx = evt.rowIndex;
 					var rowData = wid.searchDataGrid.getItem(idx);
@@ -1747,22 +1652,18 @@ define(["dojo/_base/declare",
 						wid.txtZip3.setValue(rowData.Zip);
 						wid.txtCountry3.setValue(rowData.Country);
 					}
-					//wid.txtPhone3.setValue(rowData.Phone);
-					//wid.txtEmail3.setValue(rowData.Email);
-					
 					searchDeptorDialog.hide();
 				});
-				
-				
             },
-			
-			
+
+			/*
+			This function retrieves the submitter information of a job and set it to submitter and sentto tabs
+			*/
 			fillSecondTab: function(jobId){
 				var wid=this;
 				var serviceParams = new Object();
 				serviceParams.jobId = jobId;
-					//alert(repository.id);
-				  Request.invokePluginService("claimCustomPlugin", "submitterInfoService",
+				  Request.invokePluginService("eSoSCustomPlugin", "submitterInfoService",
 				  {
 						requestParams: serviceParams,
 						synchronous:true,
@@ -1806,410 +1707,27 @@ define(["dojo/_base/declare",
 				  });
 			},
 			
+			/*
+			This function called automatically passing job information to the widget
+			*/
 			handleICM_eSoSCaseEvent: function(payload){
-				console.log("test 1");
-				
 				var wid=this;
 				var myCase=payload.workItemEditable.getCase();
-				console.log("#########************************");
-				var lockedByCurrentUser=payload.workItemEditable.icmWorkItem.lockedByCurrentUser;
-				
-			
-				/*if(payload.workItemEditable.getStepName() == "Rejected Job"){
-					domStyle.set(wid.btnReject.domNode, 'display', 'none');
-					domStyle.set(wid.btnCommit.domNode, 'display', '');
-					domStyle.set(wid.btnPend.domNode, 'display', 'none');
-					domStyle.set(wid.btnDeleteJob.domNode, 'display', 'none');
-					domStyle.set(wid.btnRejectLetter.domNode, 'display', '');
-					domStyle.set(wid.btnConfirmDelete.domNode, 'display', '');
-				}
-				else{
-					domStyle.set(wid.btnReject.domNode, 'display', 'none');
-					domStyle.set(wid.btnCommit.domNode, 'display', '');
-					domStyle.set(wid.btnPend.domNode, 'display', '');
-					domStyle.set(wid.btnDeleteJob.domNode, 'display', 'none');
-					domStyle.set(wid.btnRejectLetter.domNode, 'display', '');
-					domStyle.set(wid.btnConfirmDelete.domNode, 'display', '');
-				}*/
 				this.myCase=myCase;
-				//var newStore = new dojo.data.ItemFileReadStore({data: {  identifier: "GUID",  items: []}});
-				//this.docsDataGrid.setStore(newStore);
-						
-				
 				myCase.retrieveAttributes(lang.hitch(this,function(retAtt){
-					console.log("************************");
-					console.log(retAtt);
-					var map={
-					   '1':'Downgrade',
-					   '2':'NONE',
-					  '3':'24H',
-					   '4':'4H',
-					   '5':'2H',
-					   '6':'1H' 
-					};
-					
-					if(retAtt.attributes.ESOS_Status=='Pended'){
-						wid.btnCommit.setDisabled(true);
-						wid.btnConfirmDelete.setDisabled(true);
-						wid.btnPend.setDisabled(true);
-						wid.btnUpdateExpedite.setDisabled(true);
-					}
-					else{
-						wid.btnCommit.setDisabled(false);
-						wid.btnConfirmDelete.setDisabled(false);
-						wid.btnPend.setDisabled(false);
-						wid.btnUpdateExpedite.setDisabled(false);
-					}
-					
-					wid.btnPend.setDisabled(!lockedByCurrentUser);
-					wid.btnCommit.setDisabled(!lockedByCurrentUser);
-					wid.btnConfirmDelete.setDisabled(!lockedByCurrentUser);
-					wid.btnUpdateExpedite.setDisabled(!lockedByCurrentUser);
-					wid.btnAddDoc.setDisabled(!lockedByCurrentUser);
-					
 					wid.fillSecondTab(retAtt.attributes.ESOS_JobNumber);
 					console.log(retAtt.attributes.ESOS_JobNumber);
 					wid.jobNumber=retAtt.attributes.ESOS_JobNumber;
 					wid.txtJobNumber.setValue(retAtt.attributes.ESOS_JobNumber);
-					wid.txtExpedite.setValue(map[retAtt.attributes.ESOS_Expdite]);
-					/*if(retAtt.attributes.ESOS_Type !="Deleted"){
-						domStyle.set(wid.btnConfirmDelete.domNode, 'display', 'none');
-					}*/
 					myCase.retrieveCaseFolder(lang.hitch(this,function(retFol){
 						var properties = [{"name": "ESOS_AssignedTo","value" : retFol.repository.userId}];
 						retFol.saveAttributes(properties,retFol.template,null,null,false,function(response) {
-							//wid.onRefresh();
 						});
 						
-						this.btnUpdateExpedite.on("click",function(e){
-							dojo.require("dijit.form.Button");
-							dojo.require("dijit.Dialog");
-							dojo.require("dijit.form.ComboBox");
-							dojo.require("dojo.store.Memory");
-							dojo.require("ecm.model.Request");
-							
-							var myDialog = new dijit.Dialog({
-								title:'Update Expedite',
-								style:'width:400px;height:250px;'
-							});
-							var map={
-							   'Downgrade' : 1 ,
-							   'NONE' : 2 ,
-							   '24H' : 3 ,
-							   '4H' : 4 ,
-							   '2H' : 5 ,
-							   '1H' : 6 
-							};
-							var stateStore = new dojo.store.Memory({
-								data: [
-									{name:"Downgrade", id:"1"},
-									{name:"NONE", id:"2"},
-									{name:"24H", id:"3"},
-									{name:"4H", id:"4"},
-									{name:"2H", id:"5"},
-									{name:"1H", id:"6"}
-								]
-							});
-
-							var ddlExpedite = new dijit.form.ComboBox({
-								name: "state",
-								value: "NONE",
-								store: stateStore,
-								searchAttr: "name"
-							});
-							ddlExpedite.startup();
-							var myButton = new dijit.form.Button({
-								label: "Update",
-								onClick: function(){
-									var priority=map[ddlExpedite.getValue()];
-									var repository=wid.getSolution().getTargetOS();
-									if(priority<=6){
-										var properties = [{"name": "ESOS_Expdite","value" : priority},{"name": "ESOS_Priority","value" : priority}];
-										var serviceParams = new Object();
-										retFol.saveAttributes(properties,retFol.template,null,null,false,function(response) {
-											console.log(retAtt);
-											serviceParams.input = '{"JobNumber":"'+retAtt.attributes.ESOS_JobNumber+'","ExpediteCode":"'+priority+'"}';
-											ecm.model.Request.invokePluginService("claimCustomPlugin", "updateExpediteService",
-											{
-												requestParams: serviceParams,
-												synchronous:true,
-												requestCompleteCallback: function(response) {
-													//wid.onRefresh();
-												}
-											});
-											
-										});
-									}
-									else{
-										repository.retrieveItem(retAtt.caseFolderId,function(retFol){
-											var properties = [{"name": "ESOS_Expdite","value" : priority}];
-											retFol.saveAttributes(properties,retFol.template,null,null,false,function(response) {
-												//wid.onRefresh();
-											});
-										});
-									}
-									wid.txtExpedite.setValue(ddlExpedite.getValue());
-									myDialog.hide();
-								}
-							});
-							myButton.startup();
-							var tbl     = document.createElement("table");
-							var tblBody = document.createElement("tbody");
-							var row1 = document.createElement("tr");
-							var row2 = document.createElement("tr");
-							var cell1 = document.createElement("td");
-							var cell2 = document.createElement("td");
-							var cell3 = document.createElement("td");
-							cell2.colspan="2";
-							dojo.place(ddlExpedite.domNode,cell2);
-							var cellText = document.createTextNode("Select Expedite : ");
-							cell1.appendChild(cellText);
-							dojo.place(myButton.domNode,cell3);
-							row1.appendChild(cell1);
-							row1.appendChild(cell2);
-							row2.appendChild(cell3);
-							tblBody.appendChild(row1);
-							tblBody.appendChild(row2);
-							tbl.appendChild(tblBody);
-
-							dojo.place(tbl,myDialog.containerNode);
-							myDialog.show();
-						});
-						
-						this.btnRejectLetter.on("click",function(e){
-							if(wid.txtOrganization.getValue() ==''){
-								if(wid.txtFirstName.getValue()=='' || wid.txtLastName.getValue()==''){
-									alert("Please enter submitter name or organization");
-									return;
-								}
-							}
-							if(wid.txtAddress1.getValue()=='' || wid.txtCity.getValue()=='' || wid.txtZip.getValue()=='' || wid.txtState.getValue()==''){
-								alert("Please enter the submitter address information");
-								return;
-							}
-							var serviceParams2 = new Object();
-							var emptySentTo=false;
-							if(wid.txtFirstName2.getValue()=='' && wid.txtMiddleName2.getValue()=='' && wid.txtLastName2.getValue()=='' && wid.txtSuffixName2.getValue()=='' && wid.txtOrganization2.getValue()=='' && wid.txtAddress12.getValue()==''){
-								emptySentTo=true;
-							}
-							var jsonStr='{"JobNumber":"'+retAtt.attributes.ESOS_JobNumber+'","Note":"'+wid.txtNotes.getValue()+'","Submitter":{"FirstName":"'+wid.txtFirstName.getValue()+'","MiddleInitial":"'+wid.txtMiddleName.getValue()+'","LastName":"'+wid.txtLastName.getValue()+'","Suffix":"'+wid.txtSuffixName.getValue()+'","Orgnization":"'+wid.txtOrganization.getValue()+'","Address_1":"'+wid.txtAddress1.getValue()+'","Address_2":"'+
-							wid.txtAddress2.getValue()+'","City":"'+wid.txtCity.getValue()+'","Zip":"'+wid.txtZip.getValue()+'","Phone":"'+wid.txtPhone.getValue()+'","State":"'+wid.txtState.getValue()+'","Country":"'+wid.txtCountry.getValue()+'","Email":"'+wid.txtEmail.getValue()+'"}';
-							if(!emptySentTo){
-								jsonStr+=',"SendTo":{"FirstName":"'+wid.txtFirstName2.getValue()+'","MiddleInitial":"'+wid.txtMiddleName2.getValue()+'","LastName":"'+wid.txtLastName2.getValue()+'","Suffix":"'+wid.txtSuffixName2.getValue()+'","Orgnization":"'+wid.txtOrganization2.getValue()+'","Address_1":"'+wid.txtAddress12.getValue()+'","Address_2":"'+
-								wid.txtAddress22.getValue()+'","City":"'+wid.txtCity2.getValue()+'","Zip":"'+wid.txtZip2.getValue()+'","Phone":"'+wid.txtPhone2.getValue()+'","State":"'+wid.txtState2.getValue()+'","Country":"'+wid.txtCountry2.getValue()+'","Email":"'+wid.txtEmail2.getValue()+'"}';
-							}
-							else{
-								jsonStr+=',"SendTo":null';
-							}
-							jsonStr+='}';
-							
-							serviceParams2.input = jsonStr;
-							console.log("before save");
-							Request.invokePluginService("claimCustomPlugin", "saveJobService",
-							{
-								requestParams: serviceParams2,
-								synchronous:true,
-								requestCompleteCallback: function(response) {
-									rejectionDialog.show();
-								}
-							});
-							
-						});
-						
-						this.btnDoRejection.on("click",function(e){
-							var selectedIds=new Array();
-							var repository=wid.getSolution().getTargetOS();
-							array.forEach(wid.docsDataGrid.selection.getSelected(), function(row){
-								selectedIds.push(row);
-							});
-							var currDoc=selectedIds[0];
-							var reasons=new Array();
-							if(wid.rejectCHK1.checked)
-								reasons.push("1");
-							if(wid.rejectCHK2.checked)
-								reasons.push("2");
-							if(wid.rejectCHK3.checked)
-								reasons.push("3");
-							if(wid.rejectCHK4.checked)
-								reasons.push("4");
-							if(wid.rejectCHK5.checked)
-								reasons.push("5");
-							if(wid.rejectCHK6.checked)
-								reasons.push("6");
-							if(wid.rejectCHK7.checked)
-								reasons.push("7");
-							if(wid.rejectCHK8.checked)
-								reasons.push("8");
-							if(wid.rejectCHK9.checked)
-								reasons.push("9");
-							if(wid.rejectCHK10.checked)
-								reasons.push("10");
-							if(wid.rejectCHK11.checked)
-								reasons.push("11");
-							if(wid.rejectCHK12.checked)
-								reasons.push("12");
-							if(wid.rejectCHK13.checked)
-								reasons.push("13");
-							if(wid.rejectCHK14.checked)
-								reasons.push("14");
-							if(wid.rejectCHK15.checked)
-								reasons.push("15");
-							if(wid.rejectCHK16.checked)
-								reasons.push("16");
-							if(wid.rejectCHK17.checked)
-								reasons.push("17");
-							if(wid.rejectCHK18.checked)
-								reasons.push("18");
-							if(wid.rejectCHK19.checked)
-								reasons.push("19");
-							if(wid.rejectCHK20.checked)
-								reasons.push("20");
-							if(wid.rejectCHK21.checked)
-								reasons.push("21");
-							if(wid.rejectCHK22.checked)
-								reasons.push("22");
-							if(wid.rejectCHK23.checked)
-								reasons.push("23");
-							if(wid.rejectCHK24.checked)
-								reasons.push("24");
-							if(wid.rejectCHK25.checked)
-								reasons.push("25");
-							if(wid.rejectCHK26.checked)
-								reasons.push("26");
-							if(wid.rejectCHK27.checked)
-								reasons.push("27");
-							//alert(reasons.join(","));
-							var filingNo=selectedIds[0].Filing_Number , user=wid.getSolution().getTargetOS().userId;
-									//window.open("http://localhost:500/letter/RejectionLetter?filingNo="+filingNo+"&user="+user+"&rejectionNotes="+textarea.getValue());
-							var url = window.location.href;
-							var ip = url.split("/")[2];
-							window.showModalDialog("http://"+ip.split(":")[0]+":500/letter/RejectionLetter?filingNo="+filingNo+"&user="+user+"&rejectionNotes="+wid.txtRejectionNotes.getValue()+"&formOfPayment="+wid.txtFormOfPayment.getValue()+"&reasons="+reasons.join(","), "", 'dialogHeight=10px,dialogWidth=10px,status=no,toolbar=no,menubar=no,location=no');
-							
-							
-							var serviceParams = new Object();
-							serviceParams.input = selectedIds[0].Filing_Number;
-							
-							//setTimeout(
-							Request.invokePluginService("claimCustomPlugin", "deleteDocService",
-							{
-								requestParams: serviceParams,
-								synchronous:true,
-								requestCompleteCallback: function(response) {	// success
-									repository.retrieveItem(selectedIds[0].GUID,function(contentItem){
-										repository.retrieveItem(selectedIds[0].GUID, lang.hitch(wid, function(releasedItem) {
-											var properties = [{"name": "ESOS_DocStatus","value" : "Rejected"}];
-											releasedItem.saveAttributes(properties,releasedItem.template,null,null,false,function(response) {
-											//repository.deleteItems([contentItem],function(){
-												wid.docsDataGrid.store.deleteItem(currDoc);
-												var deleteJob=true;
-												for(var i=0;i<wid.docsDataGrid.store._arrayOfTopLevelItems.length;i++){
-													var currItem=wid.docsDataGrid.store._arrayOfTopLevelItems[i];
-													if(currItem==null)
-														continue;
-													if(currItem.Filing_Type != "Correspondence" && currItem.Filing_Type != "Payment"){
-														deleteJob=false;
-														break
-													}
-												}
-												
-												if(deleteJob){
-													alert("this job will be deleted as it has no filings");
-													var selectedIds=new Array();
-													var repository=wid.getSolution().getTargetOS();
-													var properties2 = [{"name": "ESOS_Rejected","value" : "Delete"}];
-														
-													retFol.saveAttributes(properties2,retFol.template,null,null,false,function(response) {
-														
-														var serviceParams = new Object();
-														serviceParams.input = retAtt.attributes.ESOS_JobNumber;
-															
-														Request.invokePluginService("claimCustomPlugin", "deleteJobService",
-														{
-															requestParams: serviceParams,
-															synchronous:true,
-															requestCompleteCallback: function(response) {	// success
-																payload.workItemEditable.completeStep(function(){
-																	repository.deleteItems([retFol],function(){
-																		window.location.reload(false);
-																	},true);
-																});
-																
-															}
-														});
-													});
-												}
-												rejectionDialog.hide();
-											});
-										}),contentItem.template,"released",contentItem.vsId);
-									});
-								}
-							});
-						});
-						
-						this.btnDeleteDoc.on("click",function(e){
-							var dialog=new ConfirmDialog({ message: "Are you sure you want to delete the selected document(s) ?",title: "Confirmation"});
-							dialog.confirmAction=function(){
-								var selectedIds=new Array();
-								var repository=wid.getSolution().getTargetOS();
-								array.forEach(wid.docsDataGrid.selection.getSelected(), function(row){
-									var serviceParams = new Object();
-									serviceParams.input = row.Filing_Number;
-										
-									Request.invokePluginService("claimCustomPlugin", "deleteDocService",
-									{
-										requestParams: serviceParams,
-										synchronous:true,
-										requestCompleteCallback: function(response) {	// success
-											repository.retrieveItem(row.GUID,function(contentItem){
-												repository.deleteItems([contentItem],function(){
-													wid.docsDataGrid.store.deleteItem(row);
-													var deleteJob=true;
-													for(var i=0;i<wid.docsDataGrid.store._arrayOfTopLevelItems.length;i++){
-														var currItem=wid.docsDataGrid.store._arrayOfTopLevelItems[i];
-														if(currItem==null)
-															continue;
-														if(currItem.Filing_Type != "Correspondence" && currItem.Filing_Type != "Payment"){
-															deleteJob=false;
-															break
-														}
-													}
-													if(deleteJob){
-														alert("this job will be deleted as it has no filings");
-														var selectedIds=new Array();
-														var repository=wid.getSolution().getTargetOS();
-														var properties2 = [{"name": "ESOS_Rejected","value" : "Delete"}];
-															
-														retFol.saveAttributes(properties2,retFol.template,null,null,false,function(response) {
-															
-															var serviceParams = new Object();
-															serviceParams.input = retAtt.attributes.ESOS_JobNumber;
-																
-															Request.invokePluginService("claimCustomPlugin", "deleteJobService",
-															{
-																requestParams: serviceParams,
-																synchronous:true,
-																requestCompleteCallback: function(response) {	// success
-																	payload.workItemEditable.completeStep(function(){
-																		repository.deleteItems([retFol],function(){
-																			window.location.reload(false);
-																		},true);
-																	});
-																	
-																}
-															});
-														});
-													}
-												},true);
-											});
-										}
-									});
-								});
-								
-								
-							}
-							dialog.show();
-						});
-						
+						/*
+						Event handler for delete job button
+						Deleting the job after got user confirmation
+						*/
 						wid.btnConfirmDelete.on("click",function(evt){
 							var dialog=new ConfirmDialog({ message: "Are you sure you want to confirm job deletion ?",title: "Confirmation"});
 							dialog.confirmAction=function(){
@@ -2222,7 +1740,7 @@ define(["dojo/_base/declare",
 									var serviceParams = new Object();
 									serviceParams.input = retAtt.attributes.ESOS_JobNumber;
 										
-									Request.invokePluginService("claimCustomPlugin", "deleteJobService",
+									Request.invokePluginService("eSoSCustomPlugin", "deleteJobService",
 									{
 										requestParams: serviceParams,
 										synchronous:true,
@@ -2245,6 +1763,10 @@ define(["dojo/_base/declare",
 						var url = window.location.href;
 						var ip = url.split("/")[2];
 						
+						/*
+						Event handler for charges & payments tab
+						Opens the charges & payments dialog
+						*/
 						wid.chargesTab.on("show",function(e){
 							wid.paymentsIFrame.set("content", dojo.create("iframe", {
 								"src": "http://"+ip.split(":")[0]+":600/Payments?jnum="+retAtt.attributes.ESOS_JobNumber,
@@ -2253,29 +1775,29 @@ define(["dojo/_base/declare",
 							paymentsDialog.show();
 							
 						});
+						
+						/*
+						Event handler for charges & payments close button
+						Close charges and payments dialog
+						*/
 						wid.btnCnclPayment.on("click",function(evt){
 							paymentsDialog.hide();
 							wid.mainTabs.selectChild(wid.fillingsTab);
 						});
+						
+						/*
+						Event handler for comit job button
+						Generate the aknowlegment letter and then comit the job
+						*/
 						wid.btnCommit.on("click",function(evt){
 							var notReviewed=new Array();
-							var noUCC=true;
 							if(wid.docsDataGrid.store !=null){
-								array.forEach(wid.docsDataGrid.store._arrayOfTopLevelItems, function(item){
+								array.forEach(wid.docsDataGrid.store._arrayOfAllItems, function(item){
 									if(item && item['Reviewed'] != 'Yes'){
 										notReviewed.push(item);
 									}
-									if(item.Filing_Type != "Correspondence" && item.Filing_Type != "Payment"){
-										noUCC=false;
-									}
 								});
 							}
-
-							if(noUCC){
-								alert("There is no UCC fillings in this job to commit !!!");
-								return;
-							}
-							
 							if(notReviewed.length > 0){
 								alert("All filings must be reviewed before commit !!!");
 								return;
@@ -2290,42 +1812,14 @@ define(["dojo/_base/declare",
 								alert("Please enter the submitter address information");
 								return;
 							}
-							if(wid.emailRadio.checked){
-								if(wid.txtFirstName2.getValue()=='' && wid.txtMiddleName2.getValue()=='' && wid.txtLastName2.getValue()=='' && wid.txtSuffixName2.getValue()=='' && wid.txtOrganization2.getValue()=='' && wid.txtAddress12.getValue()==''){
-									if(wid.txtEmail.getValue()==''){
-										alert("Please enter submitter email");
-										return;
-									}
-									else if(!wid.validateEmail(wid.txtEmail.getValue())){
-										alert("Please enter a valid submitter email");
-										return;
-									}
-								}
-								else{
-									if(wid.txtEmail2.getValue()==''){
-										alert("Please enter sentto email");
-										return;
-									}
-									else if(!wid.validateEmail(wid.txtEmail2.getValue())){
-										alert("Please enter a valid sentto email");
-										return;
-									}
-								}
-							}
 							var invalidTaxLien=false;
-							var invalidUCC=false;
-							for(var j=0;j<wid.docsDataGrid.store._arrayOfTopLevelItems.length;j++){
-								var currItem=wid.docsDataGrid.store._arrayOfTopLevelItems[j];
-								var docType=currItem.Filing_Type.toString();
+							for(var j=0;j<wid.docsDataGrid.store._arrayOfAllItems.length;j++){
+								var currItem=wid.docsDataGrid.store._arrayOfAllItems[j];
 								if(currItem.Filing_Type.toString().contains("Tax Lien")){
-
 									var serviceParams5 = new Object();
 									serviceParams5.input = currItem.Filing_Number;
-										//alert(repository.id);
-										
-									  Request.invokePluginService("claimCustomPlugin", "deptorsListService",
+							   	    Request.invokePluginService("eSoSCustomPlugin", "deptorsListService",
 									  {
-										  
 											requestParams: serviceParams5,
 											synchronous:true,
 											requestCompleteCallback: function(response) {	// success
@@ -2339,38 +1833,19 @@ define(["dojo/_base/declare",
 											}
 									  });
 								}
-								else if(docType=="UCC1" || docType == "UCC3" || docType == "UCC5"){
-									var serviceParams5 = new Object();
-									serviceParams5.input = currItem.Filing_Number;
-										//alert(repository.id);
-										
-									  Request.invokePluginService("claimCustomPlugin", "deptorsListService",
-									  {
-											requestParams: serviceParams5,
-											synchronous:true,
-											requestCompleteCallback: function(response) {	// success
-												var jsonResponse=dojo.toJson(response, true, "  ");
-												var obj = JSON.parse(jsonResponse);
-												if(obj.Debitors.length == 0 || obj.SecuredParties.length == 0){
-													invalidUCC=true;
-												}
-											}
-									  });
+								if(invalidTaxLien){
+									break;
 								}
 							}
 							
 							if(invalidTaxLien){
 								alert("Tax lien fillings must have at least one tax payer");
 							}
-							else if(invalidUCC){
-								alert("UCC fillings must have at least one debtor and one secured party");
-							}
 							else{
 								var serviceParams4 = new Object();
 								serviceParams4.input = retAtt.attributes.ESOS_JobNumber;
 								
-								//setTimeout(
-								Request.invokePluginService("claimCustomPlugin", "fullPaidService",
+								Request.invokePluginService("eSoSCustomPlugin", "fullPaidService",
 								{
 									requestParams: serviceParams4,
 									synchronous:true,
@@ -2381,187 +1856,60 @@ define(["dojo/_base/declare",
 										if(obj.Result==false){
 											alert("This job is not fully paid yet");
 										}else{
-											var serviceParams5 = new Object();
-											serviceParams5.input = retAtt.attributes.ESOS_JobNumber;
-											Request.invokePluginService("claimCustomPlugin", "checkPendingUCC11Service",
+											var serviceParams2 = new Object();
+											var emptySentTo=false;
+											if(wid.txtFirstName2.getValue()=='' && wid.txtMiddleName2.getValue()=='' && wid.txtLastName2.getValue()=='' && wid.txtSuffixName2.getValue()=='' && wid.txtOrganization2.getValue()=='' && wid.txtAddress12.getValue()==''){
+												emptySentTo=true;
+											}
+											var jsonStr='{"JobNumber":"'+retAtt.attributes.ESOS_JobNumber+'","Note":"'+wid.txtNotes.getValue()+'","Submitter":{"FirstName":"'+wid.txtFirstName.getValue()+'","MiddleInitial":"'+wid.txtMiddleName.getValue()+'","LastName":"'+wid.txtLastName.getValue()+'","Suffix":"'+wid.txtSuffixName.getValue()+'","Orgnization":"'+wid.txtOrganization.getValue()+'","Address_1":"'+wid.txtAddress1.getValue()+'","Address_2":"'+
+											wid.txtAddress2.getValue()+'","City":"'+wid.txtCity.getValue()+'","Zip":"'+wid.txtZip.getValue()+'","Phone":"'+wid.txtPhone.getValue()+'","State":"'+wid.txtState.getValue()+'","Country":"'+wid.txtCountry.getValue()+'","Email":"'+wid.txtEmail.getValue()+'"}';
+											if(!emptySentTo){
+												jsonStr+=',"SendTo":{"FirstName":"'+wid.txtFirstName2.getValue()+'","MiddleInitial":"'+wid.txtMiddleName2.getValue()+'","LastName":"'+wid.txtLastName2.getValue()+'","Suffix":"'+wid.txtSuffixName2.getValue()+'","Orgnization":"'+wid.txtOrganization2.getValue()+'","Address_1":"'+wid.txtAddress12.getValue()+'","Address_2":"'+
+												wid.txtAddress22.getValue()+'","City":"'+wid.txtCity2.getValue()+'","Zip":"'+wid.txtZip2.getValue()+'","Phone":"'+wid.txtPhone2.getValue()+'","State":"'+wid.txtState2.getValue()+'","Country":"'+wid.txtCountry2.getValue()+'","Email":"'+wid.txtEmail2.getValue()+'"}';
+											}
+											else{
+												jsonStr+=',"SendTo":null';
+											}
+											jsonStr+='}';
+											serviceParams2.input = jsonStr;
+											Request.invokePluginService("eSoSCustomPlugin", "saveJobService",
 											{
-												requestParams: serviceParams5,
+												requestParams: serviceParams2,
 												synchronous:true,
-												requestCompleteCallback: function(response) {	// success
-													var jsonResponse=dojo.toJson(response, true, "  ");
-													var obj = JSON.parse(jsonResponse);
-													if(obj.Done==false || obj.Done=='false'){
-														alert(obj.Error);
-													}
-													else{
-														var serviceParams2 = new Object();
-														var emptySentTo=false;
-														if(wid.txtFirstName2.getValue()=='' && wid.txtMiddleName2.getValue()=='' && wid.txtLastName2.getValue()=='' && wid.txtSuffixName2.getValue()=='' && wid.txtOrganization2.getValue()=='' && wid.txtAddress12.getValue()==''){
-															emptySentTo=true;
-														}
-														var jsonStr='{"JobNumber":"'+retAtt.attributes.ESOS_JobNumber+'","Note":"'+wid.txtNotes.getValue()+'","Submitter":{"FirstName":"'+wid.txtFirstName.getValue()+'","MiddleInitial":"'+wid.txtMiddleName.getValue()+'","LastName":"'+wid.txtLastName.getValue()+'","Suffix":"'+wid.txtSuffixName.getValue()+'","Orgnization":"'+wid.txtOrganization.getValue()+'","Address_1":"'+wid.txtAddress1.getValue()+'","Address_2":"'+
-														wid.txtAddress2.getValue()+'","City":"'+wid.txtCity.getValue()+'","Zip":"'+wid.txtZip.getValue()+'","Phone":"'+wid.txtPhone.getValue()+'","State":"'+wid.txtState.getValue()+'","Country":"'+wid.txtCountry.getValue()+'","Email":"'+wid.txtEmail.getValue()+'"}';
-														if(!emptySentTo){
-															jsonStr+=',"SendTo":{"FirstName":"'+wid.txtFirstName2.getValue()+'","MiddleInitial":"'+wid.txtMiddleName2.getValue()+'","LastName":"'+wid.txtLastName2.getValue()+'","Suffix":"'+wid.txtSuffixName2.getValue()+'","Orgnization":"'+wid.txtOrganization2.getValue()+'","Address_1":"'+wid.txtAddress12.getValue()+'","Address_2":"'+
-															wid.txtAddress22.getValue()+'","City":"'+wid.txtCity2.getValue()+'","Zip":"'+wid.txtZip2.getValue()+'","Phone":"'+wid.txtPhone2.getValue()+'","State":"'+wid.txtState2.getValue()+'","Country":"'+wid.txtCountry2.getValue()+'","Email":"'+wid.txtEmail2.getValue()+'"}';
-														}
-														else{
-															jsonStr+=',"SendTo":null';
-														}
-														jsonStr+='}';
-														serviceParams2.input = jsonStr;
-														console.log("before save");
-														Request.invokePluginService("claimCustomPlugin", "saveJobService",
-														{
-															requestParams: serviceParams2,
-															synchronous:true,
-															requestCompleteCallback: function(response) {
-																console.log("after save");
-																var jobNumber=retAtt.attributes.ESOS_JobNumber,user=wid.getSolution().getTargetOS().userId;
-															//	window.open("http://localhost:500/letter/AcknowldgementLetter?jobNumber="+jobNumber+"&user="+user);
-																var url = window.location.href;
-																var ip = url.split("/")[2];
-																if(wid.emailRadio.checked){
-																	var email;
-																	if(wid.txtFirstName2.getValue()=='' && wid.txtMiddleName2.getValue()=='' && wid.txtLastName2.getValue()=='' && wid.txtSuffixName2.getValue()=='' && wid.txtOrganization2.getValue()=='' && wid.txtAddress12.getValue()==''){
-																		email=wid.txtEmail.getValue();
-																	}
-																	else{
-																		email=wid.txtEmail2.getValue();
-																	}
-																	//alert("http://"+ip.split(":")[0]+":500/letter/AcknowldgementLetter?jobNumber="+jobNumber+"&user="+user+"&sendMail=true&email="+email);
-																	/*wid.aknowledgeIFrame.set("content", dojo.create("iframe", {//ip.split(":")[0]
-																		"src": "http://"+ip.split(":")[0]+":500/letter/AcknowldgementLetter?jobNumber="+jobNumber+"&user="+user+"&sendMail=true&email="+email,
-																		"style": "border: 0; width: 100%; height: 100%"
-																	}));
-																	aknowledgeDialog.show();*/
-																	
-																	var serviceParams4 = new Object();
-																	serviceParams4.input = "jobNumber="+jobNumber+"&user="+user+"&sendMail=true&email="+email;
-																	Request.invokePluginService("claimCustomPlugin", "sendMailService",
-																	{
-																		requestParams: serviceParams4,
-																		synchronous:true,
-																		requestCompleteCallback: function(response) {	// success
-																			var serviceParams = new Object();
-																			serviceParams.input = retAtt.attributes.ESOS_JobNumber;
-																			Request.invokePluginService("claimCustomPlugin", "commitJobService",
-																			{
-																				requestParams: serviceParams,
-																				synchronous:true,
-																				requestCompleteCallback: function(response) {	// success
-																					var jsonResponse=dojo.toJson(response, true, "  ");
-																					var obj = JSON.parse(jsonResponse);
-																					if(obj.Done==false || obj.Done=='false'){
-																						alert(obj.Error);
-																					}
-																					else{
-																						var properties2 = [{"name": "ESOS_Rejected","value" : "Delete"}];
-																						retFol.saveAttributes(properties2,retFol.template,null,null,false,function(response) {
-																							payload.workItemEditable.completeStep(function(){
-																								var repository=wid.getSolution().getTargetOS();
-																								var index=0;
-																								for(var j=0;j<wid.docsDataGrid.store._arrayOfTopLevelItems.length;j++){
-																									var item=wid.docsDataGrid.store._arrayOfTopLevelItems[j];
-																									repository.retrieveItem(item.GUID,function(contentItem){
-																										repository.retrieveItem(item.GUID, lang.hitch(wid, function(releasedItem) {
-																											var properties = [{"name": "ESOS_DocStatus","value" : "Committed"}];
-																											releasedItem.saveAttributes(properties,releasedItem.template,null,null,false,function(response) {
-																												if(index==wid.docsDataGrid.store._arrayOfTopLevelItems.length-1){
-																													window.location.reload(false);
-																												}
-																												index++;
-																											});
-																										}),contentItem.template,"released",contentItem.vsId);
-																									});
-																								}
-																								/*array.forEach(wid.docsDataGrid.store._arrayOfAllItems, function(item){
-																									repository.retrieveItem(item.GUID,function(contentItem){
-																										var properties = [{"name": "ESOS_DocStatus","value" : "Committed"}];
-																										contentItem.saveAttributes(properties,contentItem.template,null,null,false,function(response) {
-																										});
-																									});
-																								});
-																								window.location.reload(false);*/
-																							});
-																						});
-																					}
-																				}
-																			});
-																		}
-																	});
-																	
-			//														window.showModalDialog("http://"+ip.split(":")[0]+":500/letter/AcknowldgementLetter?jobNumber="+jobNumber+"&user="+user+"&sendMail=true&email="+email, null, 'dialogHeight=10px,dialogWidth=10px,status=no,toolbar=no,menubar=no,location=no');
-																	
-																}else{
-																	window.showModalDialog("http://"+ip.split(":")[0]+":500/letter/AcknowldgementLetter?jobNumber="+jobNumber+"&user="+user+"&sendMail=false", null, 'dialogHeight=10px,dialogWidth=10px,status=no,toolbar=no,menubar=no,location=no');
-																	var serviceParams = new Object();
-																	serviceParams.input = retAtt.attributes.ESOS_JobNumber;
-																	
-																	Request.invokePluginService("claimCustomPlugin", "commitJobService",
-																	{
-																		requestParams: serviceParams,
-																		synchronous:true,
-																		requestCompleteCallback: function(response) {	// success
-																			var jsonResponse=dojo.toJson(response, true, "  ");
-																			var obj = JSON.parse(jsonResponse);
-																			if(obj.Done==false || obj.Done=='false'){
-																				alert(obj.Error);
-																			}
-																			else{
-																				var properties2 = [{"name": "ESOS_Rejected","value" : "Delete"}];
-																				retFol.saveAttributes(properties2,retFol.template,null,null,false,function(response) {
-																					payload.workItemEditable.completeStep(function(){
-																						var repository=wid.getSolution().getTargetOS();
-																						var index=0;
-																						for(var j=0;j<wid.docsDataGrid.store._arrayOfTopLevelItems.length;j++){
-																							var item=wid.docsDataGrid.store._arrayOfTopLevelItems[j];
-																							repository.retrieveItem(item.GUID,function(contentItem){
-																								repository.retrieveItem(item.GUID, lang.hitch(wid, function(releasedItem) {
-																									var properties = [{"name": "ESOS_DocStatus","value" : "Committed"}];
-																									releasedItem.saveAttributes(properties,releasedItem.template,null,null,false,function(response) {
-																										if(index==wid.docsDataGrid.store._arrayOfTopLevelItems.length-1){
-																											window.location.reload(false);
-																										}
-																										index++;
-																									});
-																								}),contentItem.template,"released",contentItem.vsId);
-																							});
-																						}
-																						/*array.forEach(wid.docsDataGrid.store._arrayOfAllItems, function(item){
-																							
-																							repository.retrieveItem(item.GUID,function(contentItem){
-																								var properties = [{"name": "ESOS_DocStatus","value" : "Committed"}];
-																								contentItem.saveAttributes(properties,contentItem.template,null,null,false,function(response) {
-																								});
-																							});
-																						});*/
-																						
-																					});
-																				});
-																			}
-																		}
-																	});
-																}
-																
-																	
-																
-																//setTimeout(
-																
-															}
-														});
-													}
+												requestCompleteCallback: function(response) {
+													var jobNumber=retAtt.attributes.ESOS_JobNumber,user=wid.getSolution().getTargetOS().userId;
+													var url = window.location.href;
+													var ip = url.split("/")[2];
+													window.showModalDialog("http://"+ip.split(":")[0]+":500/letter/AcknowldgementLetter?jobNumber="+jobNumber+"&user="+user, null, 'dialogHeight=10px,dialogWidth=10px,status=no,toolbar=no,menubar=no,location=no');
 												}
 											});
 											
-											
-											
+											var serviceParams = new Object();
+											serviceParams.input = retAtt.attributes.ESOS_JobNumber;
+												
+											Request.invokePluginService("eSoSCustomPlugin", "commitJobService",
+											{
+												requestParams: serviceParams,
+												synchronous:true,
+												requestCompleteCallback: function(response) {	// success
+													var properties2 = [{"name": "ESOS_Rejected","value" : "Delete"}];
+													retFol.saveAttributes(properties2,retFol.template,null,null,false,function(response) {
+														payload.workItemEditable.completeStep(function(){
+															window.location.reload(false);
+														});
+													});
+												}
+											});
 										}
 									}
 								});
 							}
-							//,20000);
 						});
+						
+						/*
+						Event handler for pend job button
+						Show pend job dialog and then pend the job after fetching the required information from the user
+						*/
 						wid.btnPend.on("click",function(evt){
 							dojo.require("dijit.form.Button");
 							dojo.require("dijit.Dialog");
@@ -2592,37 +1940,15 @@ define(["dojo/_base/declare",
 									else{
 										var properties2 = [{"name": "ESOS_Rejected","value" : "Pend"},{"name": "ESOS_RejectionReasons","value" : textarea.getValue()},{"name": "ESOS_PendTimeout","value" : textbox.getValue()},{"name": "ESOS_PendUser","value" :repository.userId},{"name": "ESOS_Status","value" :"Pended"}];
 										console.log(retFol)
-										//console.log(retFol.attributes["Id"])
 										retFol.saveAttributes(properties2,retFol.template,null,null,false,function(response) {
 											var workItem=payload.workItemEditable.icmWorkItem.ecmWorkItem;
-											//var collectionController = ControllerManager.bind(workItem);
-											//var workflowIntegration = ControllerManager.getWorkflowIntegration();
-											
-											//var controller = collectionController.getPropertyController("F_CaseFolder","ESOS_PendHours");
-											console.log("Get Workflow Integration ");										
-											//collectionController.getPropertyController("ESOS_PendHours").set("value", "20");
 											workItem.setValue("ESOS_PendHours",textbox.getValue());
 											workItem.setValue("ESOS_PendTimeout",textbox.getValue());
 											payload.workItemEditable.completeStep(function(param){
-												//alert(param);
-												//console.log(param);
-												myDialog.hide();
-												window.location.reload(false);
-												/*payload.workItemEditable.lockStep(function(){
-													
-												});*/
-											});
-										});
-										/*payload.workItemEditable.icmWorkItem.moveToInbox(function(){
-											var properties2 = [{"name": "ESOS_RejectionReasons","value" : textarea.getValue()}];
-											
-											retFol.saveAttributes(properties2,retFol.template,null,null,false,function(response) {
 												myDialog.hide();
 												window.location.reload(false);
 											});
-											
 										});
-										*/
 									}
 								}
 							});
@@ -2660,772 +1986,16 @@ define(["dojo/_base/declare",
 							dojo.place(tbl,myDialog.containerNode);
 							myDialog.show();
 						});
-						/*wid.btnDeleteJob.on("click",function(evt){
-							
-							var dialog=new ConfirmDialog({ message: "Are you sure you want to delete the current job ?",title: "Confirmation"});
-							dialog.confirmAction=function(){
-								var properties2 = [{"name": "ESOS_Rejected","value" : "Yes"},{"name": "ESOS_Type" ,"value" : "Deleted"}];
-								retFol.saveAttributes(properties2,retFol.template,null,null,false,function(response) {
-									payload.workItemEditable.completeStep(function(){
-										window.location.reload(false);
-									});
-								});
-							}
-							dialog.show();
 						
-						});
-						wid.btnReject.on("click",function(evt){
-							dojo.require("dijit.form.Button");
-							dojo.require("dijit.Dialog");
-							dojo.require("dijit.form.Textarea");
-
-							var myDialog = new dijit.Dialog({
-							 title:'Reject the Job',
-							 style:'width:400px;height:250px;'
-							});
-							
-							var textarea = new dijit.form.Textarea({
-								name: "myarea",
-								style: "width:200px;"
-							});
-							textarea.startup();
-							
-							var myButton = new dijit.form.Button({
-								label: "Reject",
-								onClick: function(){
-									var properties2 = [{"name": "ESOS_RejectionReasons","value" : textarea.getValue()},{"name": "ESOS_Rejected","value" : "Yes"},{"name": "ESOS_Type" ,"value" : "Rejected"}];
-									retFol.saveAttributes(properties2,retFol.template,null,null,false,function(response) {
-										payload.workItemEditable.completeStep(function(){
-											myDialog.hide();
-											window.location.reload(false);
-										});
-									});
-								}
-							});
-							myButton.startup();
-
-							var tbl     = document.createElement("table");
-							var tblBody = document.createElement("tbody");
-							var row1 = document.createElement("tr");
-							var row2 = document.createElement("tr");
-							var cell1 = document.createElement("td");
-							var cell2 = document.createElement("td");
-							var cell3 = document.createElement("td");
-							cell3.colspan="2";
-							dojo.place(textarea.domNode,cell2);
-							var cellText = document.createTextNode("Rejection Comments : ");
-							cell1.appendChild(cellText);
-							dojo.place(myButton.domNode,cell3);
-
-							row1.appendChild(cell1);
-							row1.appendChild(cell2);
-							row2.appendChild(cell3);
-							tblBody.appendChild(row1);
-							tblBody.appendChild(row2);
-							tbl.appendChild(tblBody);
-
-							dojo.place(tbl,myDialog.containerNode);
-							myDialog.show();
-						});*/
-						wid.txtOldFillingId.on("change",function(e){
-							if(wid.txtOldFillingId.getValue()!=""){
-								var serviceParams = new Object();
-								serviceParams.input = encodeURI(wid.txtFillingNo.value);
-								serviceParams.input2=encodeURI(wid.txtIFSN.getValue());
-								serviceParams.input3=encodeURI(wid.txtOldFillingId.getValue());
-									//alert(repository.id);
-									
-								  Request.invokePluginService("claimCustomPlugin", "deptorsListService",
-								  {
-										requestParams: serviceParams,
-										synchronous:true,
-										requestCompleteCallback: function(response) {	// success
-											var typesData = [];
-											
-											var data = {
-											  items: []
-											};
-											
-											var data2 = {
-											  items: []
-											};
-											
-											var data3 = {
-											  identifier: "FilingNumber",
-											  items: []
-											};
-											
-											var data4 = {
-											  identifier: "NoteId",
-											  items: []
-											};
-											
-											var jsonResponse=dojo.toJson(response, true, "  ");
-											var obj = JSON.parse(jsonResponse);
-											wid.txtFillingDate.setDisplayedValue(obj.FillingDate);
-											wid.txtFillingTime.setDisplayedValue(obj.FilingTime);
-											wid.NumPages.value=obj.NumPages;
-											wid.ProcessedBy.value=obj.ProcessedBy;
-											wid.VerifiedBy.value=obj.VerifiedBy;
-											wid.ModifiedBy.value=obj.ModifiedBy;
-											if(!obj.FormType)
-												wid.txtFormType.setValue("FOS");
-											else
-												wid.txtFormType.setValue(obj.FormType);
-											
-											wid.isFoS.value=obj.IsFOS;
-											if(wid.isFoS.value=='true'){
-												wid.txtFillingId.setDisabled(true);
-											//	wid.txtOldFillingId.setValue(obj.OldFilingNumber);
-												wid.FOSId.value=obj.FOSID;
-												domStyle.set(wid.txtOldFillingId.domNode, 'display', '');
-												domStyle.set(wid.tdOldFillingId, 'display', '');
-											}else{
-												wid.txtFillingId.setDisabled(false);
-												domStyle.set(wid.txtOldFillingId.domNode, 'display', 'none');
-												domStyle.set(wid.tdOldFillingId, 'display', 'none');
-											}
-											
-											wid.txtIFSN.setValue(obj.IFSN);
-											wid.txtFormSaved.value="true";
-											
-											
-											wid.txtFillingId.setValue(obj.FileID);
-											
-											wid.txtLapseDate.setValue(obj.LapseDate);
-											wid.txtStatus.setValue(obj.Status);
-											
-											wid.txtFillingKey.value=obj.FillingID;
-											for(i=0;i<obj.Debitors.length;i++){
-												var debtorId=obj.Debitors[i].DebtorId;
-												var name=obj.Debitors[i].Name;
-												var address=obj.Debitors[i].Address_1;
-												var fromOCR=obj.Debitors[i].FromOCR;
-												var isEditable=obj.Debitors[i].IsEditable;
-												var fromEsos=obj.Debitors[i].FromEsos;
-												var sequence=obj.Debitors[i].Sequence;
-												data.items.push({ 
-													"debtorId":debtorId,
-													"rowType":"old",
-													"FromOCR":fromOCR,
-													"IsEditable":isEditable,
-													"FromEsos":fromEsos,
-													"Sequence":sequence,
-													"name":name.toString().toUpperCase(),
-													"address" : address.toString().toUpperCase()
-												});
-											}
-											
-											var store = new ItemFileWriteStore({data: data});
-											wid.debtorDataGrid.setStore(store);
-											var layout = [[
-											  {'name': 'Debtor Id', 'field': 'debtorId', 'hidden': true,'noresize': true},
-											  {'name': 'rowType', 'field': 'rowType', 'hidden': true,'noresize': true},
-											  {'name': 'FromOCR', 'field': 'FromOCR', 'hidden': true,'noresize': true},
-											  {'name': 'IsEditable', 'field': 'IsEditable', 'hidden': true,'noresize': true},
-											  {'name': 'FromEsos', 'field': 'FromEsos', 'hidden': true,'noresize': true},
-											  {'name': 'Sequence', 'field': 'Sequence', 'hidden': true,'noresize': true},
-											  {'name': 'Name', 'field': 'name', 'width': '50%','noresize': true},
-											  {'name': 'Address', 'field': 'address', 'width': '50%','noresize': true}
-											]];
-											wid.debtorDataGrid.setStructure(layout);
-											wid.debtorDataGrid.resize();
-																
-																		
-											for(i=0;i<obj.SecuredParties.length;i++){
-												var securePartyId=obj.SecuredParties[i].DebtorId;
-												var name=obj.SecuredParties[i].Name;
-												var address=obj.SecuredParties[i].Address_1;
-												var fromOCR=obj.SecuredParties[i].FromOCR;
-												var isEditable=obj.SecuredParties[i].IsEditable;
-												var fromEsos=obj.SecuredParties[i].FromEsos;
-												var sequence=obj.SecuredParties[i].Sequence;
-												data2.items.push({ 
-													"securePartyId":securePartyId,
-													"rowType":"old",
-													"FromOCR":fromOCR,
-													"IsEditable":isEditable,
-													"FromEsos":fromEsos,
-													"Sequence":sequence,
-													"name":name.toString().toUpperCase(),
-													"address" : address.toString().toUpperCase()
-												});
-											}
-											
-											var store2 = new ItemFileWriteStore({data: data2});
-											wid.securePartyDataGrid.setStore(store2);
-											//alert(theDialog.getTitle());
-											
-											
-											if(obj.FillingTypes && obj.FillingTypes.length>0){
-												wid.ddlType.setDisabled(false);
-												wid.ddlAction.setDisabled(true);
-												wid.lapsePeriods=new Object();
-												for(i=0;i<obj.FillingTypes.length;i++){
-													if(obj.FillingTypes[i].Code=='FS'){
-														typesData.push({ 
-															"id":obj.FillingTypes[i].Name,
-															"name":obj.FillingTypes[i].Name,
-															"selected":true
-														});
-													}
-													else{
-														typesData.push({ 
-															"id":obj.FillingTypes[i].Name,
-															"name":obj.FillingTypes[i].Name
-														});
-													}
-													
-													if(obj.FillingTypes[i].LapsePeriod)
-														wid.lapsePeriods[obj.FillingTypes[i].Name]=obj.FillingTypes[i].LapsePeriod.split('Y')[1];
-													else
-														wid.lapsePeriods[obj.FillingTypes[i].Name]=null;
-												}
-												var typesStore = new Memory({ data: typesData });
-												wid.ddlType.store=typesStore;
-												
-												if(obj.Type != null)
-													wid.ddlType.setValue(obj.Type);
-												else
-													wid.ddlType.setValue("Financing Statement");
-												//wid.txtApplyAction.value='false';
-												wid.ddlAction.setValue("");
-											}
-											else{
-												if(obj.Type != null)
-													wid.ddlType.setValue(obj.Type);
-												else
-													wid.ddlType.setValue("Financing Statement");
-												
-												wid.ddlType.setDisabled(true);
-												wid.ddlAction.setDisabled(false);
-												if(obj.Action!=null)
-													wid.txtApplyAction.value='false';
-												else
-													wid.txtApplyAction.value='true';
-												wid.ddlAction.setValue(obj.Action);
-											}
-											
-											var layout2 = [[
-											  {'name': 'Secure Party Id', 'field': 'securePartyId', 'hidden': true,'noresize': true},
-											  {'name': 'rowType', 'field': 'rowType', 'hidden': true,'noresize': true},
-											  {'name': 'FromOCR', 'field': 'FromOCR', 'hidden': true,'noresize': true},
-											  {'name': 'IsEditable', 'field': 'IsEditable', 'hidden': true,'noresize': true},
-											  {'name': 'FromEsos', 'field': 'FromEsos', 'hidden': true,'noresize': true},
-											  {'name': 'Sequence', 'field': 'Sequence', 'hidden': true,'noresize': true},
-											  {'name': 'Name', 'field': 'name', 'width': '50%','noresize': true},
-											  {'name': 'Address', 'field': 'address', 'width': '50%','noresize': true}
-											]];
-											wid.securePartyDataGrid.setStructure(layout2);
-											wid.securePartyDataGrid.resize();
-											
-											var serviceParams2 = new Object();
-											serviceParams2.input = obj.IFSN;
-											var jsonStr='{"ifsn":"'+obj.IFSN+'","filingNumber":"'+wid.txtFillingNo.value+'"}';
-											serviceParams2.input = jsonStr;
-											
-											Request.invokePluginService("claimCustomPlugin", "historyService",
-											{
-												requestParams: serviceParams2,
-												synchronous:true,
-												requestCompleteCallback: function(response) {	// success
-													var jsonResponse2=dojo.toJson(response, true, "  ");
-													var obj2 = JSON.parse(jsonResponse2);
-													for(i=0;i<obj2.length;i++){
-														var action=obj2[i].Action;
-														var fillingNumber=obj2[i].FilingNumber;
-														var fillingDate=obj2[i].FilingDate;
-														var pages=obj2[i].Pages;
-														//var notes=obj2[i].Notes;
-														var scannedBy=obj2[i].ScannedBy;
-														var processedBy=obj2[i].ProcessedBy;
-														//var verifiedBy=obj2[i].VerifiedBy;
-														var GUID=obj2[i].GUID;
-														var formType=obj2[i].FormType;
-														var oldFilingNumber=obj2[i].OldFilingNumber;
-														
-														data3.items.push({ 
-															"Action":action,
-															"FilingNumber":fillingNumber,
-															"FilingDate":fillingDate,
-															"Pages":pages,
-															//"Notes" : notes,
-															"ScannedBy" : scannedBy,
-															"ProcessedBy" : processedBy,
-															//"VerifiedBy" : verifiedBy,
-															"GUID" : GUID,
-															"FormType" : formType,
-															"OldFilingNumber" : oldFilingNumber
-														});
-													}
-													
-													var store3 = new ItemFileWriteStore({data: data3});
-													wid.historyDataGrid.setStore(store3);
-													var layout3 = [[
-													  {'name': 'Action', 'field': 'Action', 'width': '15%','noresize': true},
-													  {'name': 'Filing Number', 'field': 'FilingNumber', 'width': '14%','formatter': wid.formatURL,'noresize': true},
-													  {'name': 'Filing Date', 'field': 'FilingDate', 'width': '12%','noresize': true},
-													  {'name': 'Pages', 'field': 'Pages', 'width': '9%','noresize': true},
-													  //{'name': 'Notes', 'field': 'Notes', 'width': '10%','noresize': true},
-													  {'name': 'Receipted By', 'field': 'ScannedBy', 'width': '12%','noresize': true},
-													  {'name': 'Processed By', 'field': 'ProcessedBy', 'width': '12%','noresize': true},
-													  //{'name': 'Verified By', 'field': 'VerifiedBy', 'width': '10%','noresize': true},
-													  {'name': 'Form Type', 'field': 'FormType', 'width': '12%','noresize': true},
-													  {'name': 'Old Filing Number', 'field': 'OldFilingNumber', 'width': '14%','noresize': true},
-													  {'name': 'GUID', 'field': 'GUID', 'hidden': true,'noresize': true},
-													]];
-													wid.historyDataGrid.setStructure(layout3);
-													wid.historyDataGrid.resize();
-													
-												}
-											});
-											
-											
-											var serviceParams3 = new Object();
-											serviceParams3.input = obj.FileID;
-											serviceParams3.input2 = (wid.isFoS.value=='true')?true:false;
-											Request.invokePluginService("claimCustomPlugin", "notesService",
-											{
-												requestParams: serviceParams3,
-												synchronous:true,
-												requestCompleteCallback: function(response) {	// success
-													var jsonResponse3=dojo.toJson(response, true, "  ");
-													var obj3 = JSON.parse(jsonResponse3);
-													for(i=0;i<obj3.length;i++){
-														var noteId=obj3[i].NoteId;
-														var note=obj3[i].Note;
-														var user=obj3[i].User;
-														var creationDate=obj3[i].CreationDate;
-														data4.items.push({ 
-															"NoteId":noteId,
-															"Note":note,
-															"User":user,
-															"CreationDate" : creationDate
-														});
-													}
-													
-													var store4 = new ItemFileWriteStore({data: data4});
-													wid.notesDataGrid.setStore(store4);
-													var layout4 = [[
-													  {'name': 'NoteId', 'field': 'NoteId', 'hidden': true,'noresize': true},
-													  {'name': 'User Name', 'field': 'User', 'width': '25%','noresize': true},
-													  {'name': 'Creation Date', 'field': 'CreationDate', 'width': '25%','noresize': true},
-													  {'name': 'Note Text', 'field': 'Note', 'width': '50%','noresize': true}
-													]];
-													wid.notesDataGrid.setStructure(layout4);
-													wid.notesDataGrid.canSort = function(col){ return false; }; 
-													wid.notesDataGrid.resize();
-													
-												}
-											});
-										}
-								  });
-							}
-						});
-						wid.txtIFSN.on("change",function(e){
-							if(wid.txtIFSN.getValue()!=wid.txtFillingId.getValue() && wid.txtIFSN.getValue()!="" && wid.isFoS.value!='true'){
-								
-								var serviceParams = new Object();
-								serviceParams.input = encodeURI(wid.txtFillingNo.value);
-								serviceParams.input2=encodeURI(wid.txtIFSN.getValue());
-								
-									//alert(repository.id);
-									
-								  Request.invokePluginService("claimCustomPlugin", "deptorsListService",
-								  {
-										requestParams: serviceParams,
-										synchronous:true,
-										requestCompleteCallback: function(response) {	// success
-											var typesData = [];
-											
-											var data = {
-											  items: []
-											};
-											
-											var data2 = {
-											  items: []
-											};
-											
-											var data3 = {
-											  identifier: "FilingNumber",
-											  items: []
-											};
-											
-											var data4 = {
-											  identifier: "NoteId",
-											  items: []
-											};
-											
-											var jsonResponse=dojo.toJson(response, true, "  ");
-											var obj = JSON.parse(jsonResponse);
-											if(obj.Done==false){
-												console.log(e);
-												alert(obj.Error);
-												wid.txtIFSN.setValue("");
-												return;
-											}
-											wid.txtFillingDate.setDisplayedValue(obj.FillingDate);
-											wid.txtFillingTime.setDisplayedValue(obj.FilingTime);
-											wid.NumPages.value=obj.NumPages;
-											wid.ProcessedBy.value=obj.ProcessedBy;
-											wid.VerifiedBy.value=obj.VerifiedBy;
-											wid.ModifiedBy.value=obj.ModifiedBy;
-											if(theDialog.get("title") == 'Tax Payer'){
-												wid.txtFormType.setValue("Federal Tax Lien");
-											}
-											else{
-												if(!obj.FormType)
-													wid.txtFormType.setValue("FOS");
-												else
-													wid.txtFormType.setValue(obj.FormType);
-											}
-											wid.isFoS.value=obj.IsFOS;
-											if(wid.isFoS.value=='true'){
-												wid.txtFillingId.setDisabled(true);
-												wid.txtOldFillingId.setValue(obj.OldFilingNumber);
-												wid.FOSId.value=obj.FOSID;
-												domStyle.set(wid.txtOldFillingId.domNode, 'display', '');
-												domStyle.set(wid.tdOldFillingId, 'display', '');
-												wid.lblFillingId.innerHTML="FOS Filing Number:";
-											}else{
-												wid.txtFillingId.setDisabled(false);
-												domStyle.set(wid.txtOldFillingId.domNode, 'display', 'none');
-												domStyle.set(wid.tdOldFillingId, 'display', 'none');
-												wid.lblFillingId.innerHTML="Filing Number:";
-											}
-											
-											if(theDialog.get("title") == 'Tax Payer' && obj.DocAction == null){
-												//wid.txtIFSN.setValue("");
-												wid.txtFormSaved.value="true";
-											}
-											else{
-												wid.txtIFSN.setValue(obj.IFSN);
-												wid.txtFormSaved.value="true";
-											}
-											
-											wid.txtFillingId.setValue(obj.FileID);
-											
-											wid.txtLapseDate.setValue(obj.LapseDate);
-											wid.txtStatus.setValue(obj.Status);
-											
-											wid.txtFillingKey.value=obj.FillingID;
-											if(obj.Debitors != null){
-												for(i=0;i<obj.Debitors.length;i++){
-													var debtorId=obj.Debitors[i].DebtorId;
-													var name=obj.Debitors[i].Name;
-													var address=obj.Debitors[i].Address_1;
-													var fromOCR=obj.Debitors[i].FromOCR;
-													var isEditable=obj.Debitors[i].IsEditable;
-													var fromEsos=obj.Debitors[i].FromEsos;
-													var sequence=obj.Debitors[i].Sequence;
-													data.items.push({ 
-														"debtorId":debtorId,
-														"rowType":"old",
-														"FromOCR":fromOCR,
-														"IsEditable":isEditable,
-														"FromEsos":fromEsos,
-														"Sequence":sequence,
-														"name":name.toString().toUpperCase(),
-														"address" : address.toString().toUpperCase()
-													});
-												}
-												
-												var store = new ItemFileWriteStore({data: data});
-												wid.debtorDataGrid.setStore(store);
-												var layout = [[
-												  {'name': 'Debtor Id', 'field': 'debtorId', 'hidden': true,'noresize': true},
-												  {'name': 'rowType', 'field': 'rowType', 'hidden': true,'noresize': true},
-												  {'name': 'FromOCR', 'field': 'FromOCR', 'hidden': true,'noresize': true},
-												  {'name': 'IsEditable', 'field': 'IsEditable', 'hidden': true,'noresize': true},
-												  {'name': 'FromEsos', 'field': 'FromEsos', 'hidden': true,'noresize': true},
-												  {'name': 'Sequence', 'field': 'Sequence', 'hidden': true,'noresize': true},
-												  {'name': 'Name', 'field': 'name', 'width': '50%','noresize': true},
-												  {'name': 'Address', 'field': 'address', 'width': '50%','noresize': true}
-												]];
-												wid.debtorDataGrid.setStructure(layout);
-												wid.debtorDataGrid.resize();
-											}																
-
-											if(obj.SecuredParties != null){
-												for(i=0;i<obj.SecuredParties.length;i++){
-													var securePartyId=obj.SecuredParties[i].DebtorId;
-													var name=obj.SecuredParties[i].Name;
-													var address=obj.SecuredParties[i].Address_1;
-													var fromOCR=obj.SecuredParties[i].FromOCR;
-													var isEditable=obj.SecuredParties[i].IsEditable;
-													var fromEsos=obj.SecuredParties[i].FromEsos;
-													var sequence=obj.SecuredParties[i].Sequence;
-													data2.items.push({ 
-														"securePartyId":securePartyId,
-														"rowType":"old",
-														"FromOCR":fromOCR,
-														"IsEditable":isEditable,
-														"FromEsos":fromEsos,
-														"Sequence":sequence,
-														"name":name.toString().toUpperCase(),
-														"address" : address.toString().toUpperCase()
-													});
-												}
-												
-												if(theDialog.get("title") == 'Tax Payer'){
-													if(data2.items.length==0){
-														data2.items.push({ 
-															"securePartyId":"-1",
-															"rowType":"old",
-															"FromOCR":"true",
-															"IsEditable":"true",
-															"FromEsos":"true",
-															"Sequence":"1",
-															"name":"INTERNAL REVENUE SERVICE",
-															"address" : "P.O BOX 145595 CINCINNATI OH 45250-5595"
-														});
-													}
-												}
-												
-												var store2 = new ItemFileWriteStore({data: data2});
-												wid.securePartyDataGrid.setStore(store2);
-											}
-											//alert(theDialog.getTitle());
-											
-											if(theDialog.get("title") == 'Tax Payer'){
-												wid.ddlType.setDisabled(false);
-												wid.ddlAction.setDisabled(true);
-												var typesStore = new Memory({ data: typesData });
-												wid.ddlType.store=typesStore;
-												wid.lapsePeriods=new Object();
-												
-												typesData.push({ 
-													"id":"Notice of Federal Tax Lien",
-													"name":"Notice of Federal Tax Lien"
-												});
-												wid.lapsePeriods["Notice of Federal Tax Lien"]="10";
-												
-												typesData.push({ 
-													"id":"Notice of Tax Lien Refiling",
-													"name":"Notice of Tax Lien Refiling"
-												});
-												wid.lapsePeriods["Notice of Tax Lien Refiling"]="20";
-												typesData.push({ 
-													"id":"Notice of Tax Lien Certificate of Release",
-													"name":"Notice of Tax Lien Certificate of Release"
-												});
-												//wid.lapsePeriods["Notice of Tax Lien Certificate of Release"]="10";
-												typesData.push({ 
-													"id":"Notice of Tax Lien Certificate of Subordination",
-													"name":"Notice of Tax Lien Certificate of Subordination"
-												});
-												//wid.lapsePeriods["Notice of Tax Lien Certificate of Subordination"]="10";
-												typesData.push({ 
-													"id":"Notice of Tax Lien Correction",
-													"name":"Notice of Tax Lien Correction"
-												});
-												//wid.lapsePeriods["Notice of Tax Lien Correction"]="10";
-												typesData.push({ 
-													"id":"Notice of Tax Lien Withdrawal",
-													"name":"Notice of Tax Lien Withdrawal"
-												});
-												//wid.lapsePeriods["Notice of Tax Lien Withdrawal"]="10";
-												typesData.push({ 
-													"id":"Notice of Tax Lien Revocation of Certificate of Release of Federal Tax Lien",
-													"name":"Notice of Tax Lien Revocation of Certificate of Release of Federal Tax Lien"
-												});
-												//wid.lapsePeriods["Notice of Tax Lien Revocation of Certificate of Release of Federal Tax Lien"]="10";
-												typesData.push({ 
-													"id":"Notice of Tax Lien Certificate of Non-attachment",
-													"name":"Notice of Tax Lien Certificate of Non-attachment"
-												});
-												//wid.lapsePeriods["Notice of Tax Lien Certificate of Non-attachment"]="10";
-												typesData.push({ 
-													"id":"Discharge of Property",
-													"name":"Discharge of Property"
-												});
-												//wid.lapsePeriods["Discharge of Property"]="10";
-												typesData.push({ 
-													"id":"Notice of Tax Lien Withdrawal After Release",
-													"name":"Notice of Tax Lien Withdrawal After Release"
-												});
-												//wid.lapsePeriods["Notice of Tax Lien Withdrawal After Release"]="10";
-												typesData.push({ 
-													"id":"Amendment",
-													"name":"Amendment"
-												});
-												//wid.lapsePeriods["Amendment"]="10";
-												//if(obj.DocAction != null)
-													//wid.ddlType.setValue(obj.DocAction);
-												
-												
-											}
-											else{
-												if(obj.FillingTypes && obj.FillingTypes.length>0){
-													wid.ddlType.setDisabled(false);
-													wid.ddlAction.setDisabled(true);
-													wid.lapsePeriods=new Object();
-													for(i=0;i<obj.FillingTypes.length;i++){
-														if(obj.FillingTypes[i].Code=='FS'){
-															typesData.push({ 
-																"id":obj.FillingTypes[i].Name,
-																"name":obj.FillingTypes[i].Name,
-																"selected":true
-															});
-														}
-														else{
-															typesData.push({ 
-																"id":obj.FillingTypes[i].Name,
-																"name":obj.FillingTypes[i].Name
-															});
-														}
-														
-														if(obj.FillingTypes[i].LapsePeriod)
-															wid.lapsePeriods[obj.FillingTypes[i].Name]=obj.FillingTypes[i].LapsePeriod.split('Y')[1];
-														else
-															wid.lapsePeriods[obj.FillingTypes[i].Name]=null;
-													}
-													var typesStore = new Memory({ data: typesData });
-													wid.ddlType.store=typesStore;
-													
-													if(obj.Type != null)
-														wid.ddlType.setValue(obj.Type);
-													else
-														wid.ddlType.setValue("Financing Statement");
-													//wid.txtApplyAction.value='false';
-													wid.ddlAction.setValue("");
-												}
-												else{
-													if(obj.Type != null)
-														wid.ddlType.setValue(obj.Type);
-													else
-														wid.ddlType.setValue("Financing Statement");
-													
-													wid.ddlType.setDisabled(true);
-													wid.ddlAction.setDisabled(false);
-													if(obj.Action!=null)
-														wid.txtApplyAction.value='false';
-													else
-														wid.txtApplyAction.value='true';
-													//wid.ddlAction.setValue(obj.Action);
-													wid.ddlAction.setValue("");
-												}
-											}
-											var layout2 = [[
-											  {'name': 'Secure Party Id', 'field': 'securePartyId', 'hidden': true,'noresize': true},
-											  {'name': 'rowType', 'field': 'rowType', 'hidden': true,'noresize': true},
-											  {'name': 'FromOCR', 'field': 'FromOCR', 'hidden': true,'noresize': true},
-											  {'name': 'IsEditable', 'field': 'IsEditable', 'hidden': true,'noresize': true},
-											  {'name': 'FromEsos', 'field': 'FromEsos', 'hidden': true,'noresize': true},
-											  {'name': 'Sequence', 'field': 'Sequence', 'hidden': true,'noresize': true},
-											  {'name': 'Name', 'field': 'name', 'width': '50%','noresize': true},
-											  {'name': 'Address', 'field': 'address', 'width': '50%','noresize': true}
-											]];
-											wid.securePartyDataGrid.setStructure(layout2);
-											wid.securePartyDataGrid.resize();
-											
-											var serviceParams2 = new Object();
-											serviceParams2.input = obj.IFSN;
-											var jsonStr='{"ifsn":"'+obj.IFSN+'","filingNumber":"'+wid.txtFillingNo.value+'"}';
-											serviceParams2.input = jsonStr;
-											
-											Request.invokePluginService("claimCustomPlugin", "historyService",
-											{
-												requestParams: serviceParams2,
-												synchronous:true,
-												requestCompleteCallback: function(response) {	// success
-													var jsonResponse2=dojo.toJson(response, true, "  ");
-													var obj2 = JSON.parse(jsonResponse2);
-													for(i=0;i<obj2.length;i++){
-														var action=obj2[i].Action;
-														var fillingNumber=obj2[i].FilingNumber;
-														var fillingDate=obj2[i].FilingDate;
-														var pages=obj2[i].Pages;
-														//var notes=obj2[i].Notes;
-														var scannedBy=obj2[i].ScannedBy;
-														var processedBy=obj2[i].ProcessedBy;
-														//var verifiedBy=obj2[i].VerifiedBy;
-														var GUID=obj2[i].GUID;
-														var formType=obj2[i].FormType;
-														var oldFilingNumber=obj2[i].OldFilingNumber;
-														
-														data3.items.push({ 
-															"Action":action,
-															"FilingNumber":fillingNumber,
-															"FilingDate":fillingDate,
-															"Pages":pages,
-															//"Notes" : notes,
-															"ScannedBy" : scannedBy,
-															"ProcessedBy" : processedBy,
-															//"VerifiedBy" : verifiedBy,
-															"GUID" : GUID,
-															"FormType" : formType,
-															"OldFilingNumber" : oldFilingNumber
-														});
-													}
-													
-													var store3 = new ItemFileWriteStore({data: data3});
-													wid.historyDataGrid.setStore(store3);
-													var layout3 = [[
-													  {'name': 'Action', 'field': 'Action', 'width': '15%','noresize': true},
-													  {'name': 'Filing Number', 'field': 'FilingNumber', 'width': '14%','formatter': wid.formatURL,'noresize': true},
-													  {'name': 'Filing Date', 'field': 'FilingDate', 'width': '12%','noresize': true},
-													  {'name': 'Pages', 'field': 'Pages', 'width': '9%','noresize': true},
-													  //{'name': 'Notes', 'field': 'Notes', 'width': '10%','noresize': true},
-													  {'name': 'Receipted By', 'field': 'ScannedBy', 'width': '12%','noresize': true},
-													  {'name': 'Processed By', 'field': 'ProcessedBy', 'width': '12%','noresize': true},
-													  //{'name': 'Verified By', 'field': 'VerifiedBy', 'width': '10%','noresize': true},
-													  {'name': 'Form Type', 'field': 'FormType', 'width': '12%','noresize': true},
-													  {'name': 'Old Filing Number', 'field': 'OldFilingNumber', 'width': '14%','noresize': true},
-													  {'name': 'GUID', 'field': 'GUID', 'hidden': true,'noresize': true},
-													]];
-													wid.historyDataGrid.setStructure(layout3);
-													wid.historyDataGrid.resize();
-													
-												}
-											});
-											
-											
-											var serviceParams3 = new Object();
-											serviceParams3.input = obj.FileID;
-											serviceParams3.input2 = (wid.isFoS.value=='true')?true:false;
-											Request.invokePluginService("claimCustomPlugin", "notesService",
-											{
-												requestParams: serviceParams3,
-												synchronous:true,
-												requestCompleteCallback: function(response) {	// success
-													var jsonResponse3=dojo.toJson(response, true, "  ");
-													var obj3 = JSON.parse(jsonResponse3);
-													for(i=0;i<obj3.length;i++){
-														var noteId=obj3[i].NoteId;
-														var note=obj3[i].Note;
-														var user=obj3[i].User;
-														var creationDate=obj3[i].CreationDate;
-														data4.items.push({ 
-															"NoteId":noteId,
-															"Note":note,
-															"User":user,
-															"CreationDate" : creationDate
-														});
-													}
-													
-													var store4 = new ItemFileWriteStore({data: data4});
-													wid.notesDataGrid.setStore(store4);
-													var layout4 = [[
-													  {'name': 'NoteId', 'field': 'NoteId', 'hidden': true,'noresize': true},
-													  {'name': 'User Name', 'field': 'User', 'width': '25%','noresize': true},
-													  {'name': 'Creation Date', 'field': 'CreationDate', 'width': '25%','noresize': true},
-													  {'name': 'Note Text', 'field': 'Note', 'width': '50%','noresize': true}
-													]];
-													wid.notesDataGrid.setStructure(layout4);
-													wid.notesDataGrid.canSort = function(col){ return false; }; 
-													wid.notesDataGrid.resize();
-													
-												}
-											});
-										}
-								  });
-							}
-						});
+						/*
+						Event handler for add document button
+						Open dialog to add correspondence or payment document
+						*/
 						wid.btnAddDoc.on("click",function(e){
 							var addContentItemDialog = new AddContentItemDialog();
 							var contentItemGeneralPane = addContentItemDialog.addContentItemGeneralPane;
 							domStyle.set(contentItemGeneralPane._documentOnlyArea,"display", "none");
+							
 							addContentItemDialog.showUsingTemplateItem(retFol.repository,retFol, true, false, lang.hitch(this, function(item){
 								var contentType=item.id.split(',')[0];
 								var intContentType=0;
@@ -3451,7 +2021,7 @@ define(["dojo/_base/declare",
 								}
 								
 								serviceParams.input = jsonStr;
-								Request.invokePluginService("claimCustomPlugin", "saveDocService",
+								Request.invokePluginService("eSoSCustomPlugin", "saveDocService",
 								{
 									requestParams: serviceParams,
 									synchronous:true,
@@ -3469,6 +2039,10 @@ define(["dojo/_base/declare",
 								
 							}), null, null);
 						});
+						
+						/*
+						Retrieves the job details information
+						*/
 						retFol.retrieveFolderContents(false, function(results) {
 							var items = [];
 							var itemIds = [];
@@ -3489,7 +2063,7 @@ define(["dojo/_base/declare",
 									var jsonStr='{"JobID":"'+retAtt.attributes.ESOS_JobNumber+'",Filings:['+serviceInput.toString()+']}';
 									var serviceParams = new Object();
 									serviceParams.input = jsonStr;
-									  Request.invokePluginService("claimCustomPlugin", "docsInfoService",
+									  Request.invokePluginService("eSoSCustomPlugin", "docsInfoService",
 									  {
 											requestParams: serviceParams,
 											synchronous:true,
@@ -3507,6 +2081,7 @@ define(["dojo/_base/declare",
 													var filingNumber=obj[i].Filing_Number;
 													var filingDate=obj[i].Filing_Date;
 													var filingType=obj[i].Filing_Type;
+													var reduct=obj[i].Reduct;
 													var reviewed=obj[i].Reviewed;
 													var filingStatus=obj[i].Filing_Status;
 													data.items.push({ 
@@ -3514,6 +2089,7 @@ define(["dojo/_base/declare",
 														"Filing_Number" : filingNumber,
 														"Filing_Date"  : filingDate,
 														"Filing_Type"       : filingType,
+														"Reduct"       : reduct,
 														"Reviewed": reviewed,
 														"Filing_Status"       : filingStatus
 													});
@@ -3521,12 +2097,13 @@ define(["dojo/_base/declare",
 												var store = new ItemFileWriteStore({data: data});
 												wid.docsDataGrid.setStore(store);
 												var layout = [[
-												  {'name': 'id', 'field': 'GUID', 'hidden':true,'noresize': true},
-												  {'name': 'Filing Number', 'field': 'Filing_Number', 'width': '22%','noresize': true},
-												  {'name': 'Filing Date', 'field': 'Filing_Date', 'width': '22%','noresize': true},
-												  {'name': 'Filing Type', 'field': 'Filing_Type', 'width': '22%','noresize': true},
-												  {'name': 'Reviewed', 'field': 'Reviewed', 'width': '12%','noresize': true},
-												  {'name': 'Filing Status', 'field': 'Filing_Status', 'width': '22%','noresize': true}
+												  {'name': 'id', 'field': 'GUID', 'hidden':true},
+												  {'name': 'Filing Number', 'field': 'Filing_Number', 'width': '15%'},
+												  {'name': 'Filing Date', 'field': 'Filing_Date', 'width': '15%'},
+												  {'name': 'Filing Type', 'field': 'Filing_Type', 'width': '15%'},
+												  {'name': 'Redacted', 'field': 'Reduct', 'width': '10%'},
+												  {'name': 'Reviewed', 'field': 'Reviewed', 'width': '10%'},
+												  {'name': 'Filing Status', 'field': 'Filing_Status', 'width': '15%'}
 												]];
 												wid.docsDataGrid.setStructure(layout);
 												wid.docsDataGrid.resize();
@@ -3539,6 +2116,10 @@ define(["dojo/_base/declare",
 				}));
 				
 			},
+			/*
+			This function called automatically when the save job button clicked
+			Saved submitter and sentto information
+			*/
 			handleICM_SaveCaseEvent: function(payload){
 				var wid=this;
 				console.log(payload);
@@ -3562,7 +2143,7 @@ define(["dojo/_base/declare",
 					jsonStr+='}';
 					
 					serviceParams.input = jsonStr;
-					Request.invokePluginService("claimCustomPlugin", "saveJobService",
+					Request.invokePluginService("eSoSCustomPlugin", "saveJobService",
 					{
 						requestParams: serviceParams,
 						synchronous:true,
@@ -3572,20 +2153,22 @@ define(["dojo/_base/declare",
 					});
 				}));
 			},
+			/*
+			a helper function to put history grid filling number field in a URL format to open the document viewer
+			*/
 			formatURL: function (val, rowIdx){
 				var rowData = this.grid.getItem(rowIdx);
 				var url="window.open('DocViewer.jsp?itemId="+rowData.GUID+"\',\'\',\'width="+win.getBox().w+",height="+(win.getBox().h)+",resizable,scrollbars=yes,status=1\')";
 				console.log("<a href=\"javascript:void(0)\" onclick=\""+url+"\">"+val+"</a>");
 				return "<a href=\"javascript:void(0)\" onclick=\""+url+"\">"+val+"</a>";
 			},
-			validateEmail: function(email) {
-				var re = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
-				return re.test(email);
-			},
+			
+			/*
+			Gets list of debtors and secured parties
+			*/
 			initDebtorSecureParty: function(fillingNumber,GUID){
 				
 				var wid=this;
-				wid.btnSaveDeptor.setDisabled(false);
 				wid.txtGUID.value=GUID;
 				if(ecm.model.desktop.currentRole.name == "Supervisor"){
 					wid.txtFillingId.setDisabled(false);
@@ -3593,16 +2176,11 @@ define(["dojo/_base/declare",
 				else{
 					wid.txtFillingId.setDisabled(true);
 				}
-				
-				
-				
 				var serviceParams = new Object();
 				
 				this.txtFillingNo.value=fillingNumber;
 				serviceParams.input = fillingNumber;
-					//alert(repository.id);
-					
-				  Request.invokePluginService("claimCustomPlugin", "deptorsListService",
+				  Request.invokePluginService("eSoSCustomPlugin", "deptorsListService",
 				  {
 						requestParams: serviceParams,
 						synchronous:true,
@@ -3667,21 +2245,8 @@ define(["dojo/_base/declare",
 							}
 							
 							wid.txtFillingId.setValue(obj.FileID);
-							
 							wid.txtLapseDate.setValue(obj.LapseDate);
-							wid.lastLapse=wid.txtLapseDate.getValue();
 							wid.txtStatus.setValue(obj.Status);
-							
-							if(obj.LapseDate && obj.LapseDate != ''){
-								var lapsedDate=new Date(obj.LapseDate);
-								lapsedDate.setHours(23);
-								lapsedDate.setMinutes(59);
-								var currDate=new Date();
-								if(lapsedDate<currDate){
-									alert("The filing is lapsed, No more changes acceptable !!!");
-									wid.btnSaveZDialog.setDisabled(true);
-								}
-							}
 							
 							wid.txtFillingKey.value=obj.FillingID;
 							for(i=0;i<obj.Debitors.length;i++){
@@ -3707,19 +2272,30 @@ define(["dojo/_base/declare",
 							var store = new ItemFileWriteStore({data: data});
 							wid.debtorDataGrid.setStore(store);
 							var layout = [[
-							  {'name': 'Debtor Id', 'field': 'debtorId', 'hidden': true,'noresize': true},
-							  {'name': 'rowType', 'field': 'rowType', 'hidden': true,'noresize': true},
-							  {'name': 'FromOCR', 'field': 'FromOCR', 'hidden': true,'noresize': true},
-							  {'name': 'IsEditable', 'field': 'IsEditable', 'hidden': true,'noresize': true},
-							  {'name': 'FromEsos', 'field': 'FromEsos', 'hidden': true,'noresize': true},
-							  {'name': 'Sequence', 'field': 'Sequence', 'hidden': true,'noresize': true},
-							  {'name': 'Name', 'field': 'name', 'width': '50%','noresize': true},
-							  {'name': 'Address', 'field': 'address', 'width': '50%','noresize': true}
+							  {'name': 'Debtor Id', 'field': 'debtorId', 'hidden': true},
+							  {'name': 'rowType', 'field': 'rowType', 'hidden': true},
+							  {'name': 'FromOCR', 'field': 'FromOCR', 'hidden': true},
+							  {'name': 'IsEditable', 'field': 'IsEditable', 'hidden': true},
+							  {'name': 'FromEsos', 'field': 'FromEsos', 'hidden': true},
+							  {'name': 'Sequence', 'field': 'Sequence', 'hidden': true},
+							  {'name': 'Name', 'field': 'name', 'width': '50%'},
+							  {'name': 'Address', 'field': 'address', 'width': '50%'}
 							]];
 							wid.debtorDataGrid.setStructure(layout);
 							wid.debtorDataGrid.resize();
 												
-														
+							if(theDialog.get("title") == 'Tax Payer'){
+								data2.items.push({ 
+									"securePartyId":"1000",
+									"rowType":"old",
+									"FromOCR":"true",
+									"IsEditable":"true",
+									"FromEsos":"true",
+									"Sequence":"1",
+									"name":"INTERNAL REVENUE SERVICE",
+									"address" : "P.O BOX 145595 CINCINNATI OH 45250-5595"
+								});
+							}							
 							for(i=0;i<obj.SecuredParties.length;i++){
 								var securePartyId=obj.SecuredParties[i].DebtorId;
 								var name=obj.SecuredParties[i].Name;
@@ -3740,25 +2316,8 @@ define(["dojo/_base/declare",
 								});
 							}
 							
-							if(theDialog.get("title") == 'Tax Payer'){
-								if(data2.items.length==0){
-									data2.items.push({ 
-										"securePartyId":"-1",
-										"rowType":"old",
-										"FromOCR":"true",
-										"IsEditable":"true",
-										"FromEsos":"true",
-										"Sequence":"1",
-										"name":"INTERNAL REVENUE SERVICE",
-										"address" : "P.O BOX 145595 CINCINNATI OH 45250-5595"
-									});
-								}
-							}
-							
 							var store2 = new ItemFileWriteStore({data: data2});
 							wid.securePartyDataGrid.setStore(store2);
-							//alert(theDialog.getTitle());
-							
 							if(theDialog.get("title") == 'Tax Payer'){
 								wid.ddlType.setDisabled(false);
 								wid.ddlAction.setDisabled(true);
@@ -3781,47 +2340,47 @@ define(["dojo/_base/declare",
 									"id":"Notice of Tax Lien Certificate of Release",
 									"name":"Notice of Tax Lien Certificate of Release"
 								});
-								//wid.lapsePeriods["Notice of Tax Lien Certificate of Release"]="10";
+								wid.lapsePeriods["Notice of Tax Lien Certificate of Release"]="10";
 								typesData.push({ 
 									"id":"Notice of Tax Lien Certificate of Subordination",
 									"name":"Notice of Tax Lien Certificate of Subordination"
 								});
-								//wid.lapsePeriods["Notice of Tax Lien Certificate of Subordination"]="10";
+								wid.lapsePeriods["Notice of Tax Lien Certificate of Subordination"]="10";
 								typesData.push({ 
 									"id":"Notice of Tax Lien Correction",
 									"name":"Notice of Tax Lien Correction"
 								});
-								//wid.lapsePeriods["Notice of Tax Lien Correction"]="10";
+								wid.lapsePeriods["Notice of Tax Lien Correction"]="10";
 								typesData.push({ 
 									"id":"Notice of Tax Lien Withdrawal",
 									"name":"Notice of Tax Lien Withdrawal"
 								});
-								//wid.lapsePeriods["Notice of Tax Lien Withdrawal"]="10";
+								wid.lapsePeriods["Notice of Tax Lien Withdrawal"]="10";
 								typesData.push({ 
 									"id":"Notice of Tax Lien Revocation of Certificate of Release of Federal Tax Lien",
 									"name":"Notice of Tax Lien Revocation of Certificate of Release of Federal Tax Lien"
 								});
-								//wid.lapsePeriods["Notice of Tax Lien Revocation of Certificate of Release of Federal Tax Lien"]="10";
+								wid.lapsePeriods["Notice of Tax Lien Revocation of Certificate of Release of Federal Tax Lien"]="10";
 								typesData.push({ 
 									"id":"Notice of Tax Lien Certificate of Non-attachment",
 									"name":"Notice of Tax Lien Certificate of Non-attachment"
 								});
-								//wid.lapsePeriods["Notice of Tax Lien Certificate of Non-attachment"]="10";
+								wid.lapsePeriods["Notice of Tax Lien Certificate of Non-attachment"]="10";
 								typesData.push({ 
 									"id":"Discharge of Property",
 									"name":"Discharge of Property"
 								});
-								//wid.lapsePeriods["Discharge of Property"]="10";
+								wid.lapsePeriods["Discharge of Property"]="10";
 								typesData.push({ 
 									"id":"Notice of Tax Lien Withdrawal After Release",
 									"name":"Notice of Tax Lien Withdrawal After Release"
 								});
-								//wid.lapsePeriods["Notice of Tax Lien Withdrawal After Release"]="10";
+								wid.lapsePeriods["Notice of Tax Lien Withdrawal After Release"]="10";
 								typesData.push({ 
 									"id":"Amendment",
 									"name":"Amendment"
 								});
-								//wid.lapsePeriods["Amendment"]="10";
+								wid.lapsePeriods["Amendment"]="10";
 								if(obj.DocAction != null)
 									wid.ddlType.setValue(obj.DocAction);
 								
@@ -3859,7 +2418,6 @@ define(["dojo/_base/declare",
 										wid.ddlType.setValue(obj.Type);
 									else
 										wid.ddlType.setValue("Financing Statement");
-									//wid.txtApplyAction.value='false';
 									wid.ddlAction.setValue("");
 								}
 								else{
@@ -3870,24 +2428,18 @@ define(["dojo/_base/declare",
 									
 									wid.ddlType.setDisabled(true);
 									wid.ddlAction.setDisabled(false);
-									if(obj.Action!=null)
-										wid.txtApplyAction.value='false';
-									else
-										wid.txtApplyAction.value='true';
 									wid.ddlAction.setValue(obj.Action);
-									console.log(wid.ddlAction);
-									wid.ddlAction.onChange();
 								}
 							}
 							var layout2 = [[
-							  {'name': 'Secure Party Id', 'field': 'securePartyId', 'hidden': true,'noresize': true},
-							  {'name': 'rowType', 'field': 'rowType', 'hidden': true,'noresize': true},
-							  {'name': 'FromOCR', 'field': 'FromOCR', 'hidden': true,'noresize': true},
-							  {'name': 'IsEditable', 'field': 'IsEditable', 'hidden': true,'noresize': true},
-							  {'name': 'FromEsos', 'field': 'FromEsos', 'hidden': true,'noresize': true},
-							  {'name': 'Sequence', 'field': 'Sequence', 'hidden': true,'noresize': true},
-							  {'name': 'Name', 'field': 'name', 'width': '50%','noresize': true},
-							  {'name': 'Address', 'field': 'address', 'width': '50%','noresize': true}
+							  {'name': 'Secure Party Id', 'field': 'securePartyId', 'hidden': true},
+							  {'name': 'rowType', 'field': 'rowType', 'hidden': true},
+							  {'name': 'FromOCR', 'field': 'FromOCR', 'hidden': true},
+							  {'name': 'IsEditable', 'field': 'IsEditable', 'hidden': true},
+							  {'name': 'FromEsos', 'field': 'FromEsos', 'hidden': true},
+							  {'name': 'Sequence', 'field': 'Sequence', 'hidden': true},
+							  {'name': 'Name', 'field': 'name', 'width': '50%'},
+							  {'name': 'Address', 'field': 'address', 'width': '50%'}
 							]];
 							wid.securePartyDataGrid.setStructure(layout2);
 							wid.securePartyDataGrid.resize();
@@ -3897,7 +2449,7 @@ define(["dojo/_base/declare",
 							var jsonStr='{"ifsn":"'+obj.IFSN+'","filingNumber":"'+fillingNumber+'"}';
 							serviceParams2.input = jsonStr;
 							
-							Request.invokePluginService("claimCustomPlugin", "historyService",
+							Request.invokePluginService("eSoSCustomPlugin", "historyService",
 							{
 								requestParams: serviceParams2,
 								synchronous:true,
@@ -3909,10 +2461,10 @@ define(["dojo/_base/declare",
 										var fillingNumber=obj2[i].FilingNumber;
 										var fillingDate=obj2[i].FilingDate;
 										var pages=obj2[i].Pages;
-										//var notes=obj2[i].Notes;
+										var notes=obj2[i].Notes;
 										var scannedBy=obj2[i].ScannedBy;
 										var processedBy=obj2[i].ProcessedBy;
-										//var verifiedBy=obj2[i].VerifiedBy;
+										var verifiedBy=obj2[i].VerifiedBy;
 										var GUID=obj2[i].GUID;
 										var formType=obj2[i].FormType;
 										var oldFilingNumber=obj2[i].OldFilingNumber;
@@ -3922,10 +2474,10 @@ define(["dojo/_base/declare",
 											"FilingNumber":fillingNumber,
 											"FilingDate":fillingDate,
 											"Pages":pages,
-											//"Notes" : notes,
+											"Notes" : notes,
 											"ScannedBy" : scannedBy,
 											"ProcessedBy" : processedBy,
-											//"VerifiedBy" : verifiedBy,
+											"VerifiedBy" : verifiedBy,
 											"GUID" : GUID,
 											"FormType" : formType,
 											"OldFilingNumber" : oldFilingNumber
@@ -3935,17 +2487,17 @@ define(["dojo/_base/declare",
 									var store3 = new ItemFileWriteStore({data: data3});
 									wid.historyDataGrid.setStore(store3);
 									var layout3 = [[
-									  {'name': 'Action', 'field': 'Action', 'width': '15%','noresize': true},
-									  {'name': 'Filing Number', 'field': 'FilingNumber', 'width': '14%','formatter': wid.formatURL,'noresize': true},
-									  {'name': 'Filing Date', 'field': 'FilingDate', 'width': '12%','noresize': true},
-									  {'name': 'Pages', 'field': 'Pages', 'width': '9%','noresize': true},
-									  //{'name': 'Notes', 'field': 'Notes', 'width': '10%','noresize': true},
-									  {'name': 'Receipted By', 'field': 'ScannedBy', 'width': '12%','noresize': true},
-									  {'name': 'Processed By', 'field': 'ProcessedBy', 'width': '12%','noresize': true},
-									  //{'name': 'Verified By', 'field': 'VerifiedBy', 'width': '10%','noresize': true},
-									  {'name': 'Form Type', 'field': 'FormType', 'width': '12%','noresize': true},
-									  {'name': 'Old Filing Number', 'field': 'OldFilingNumber', 'width': '14%','noresize': true},
-									  {'name': 'GUID', 'field': 'GUID', 'hidden': true,'noresize': true},
+									  {'name': 'Action', 'field': 'Action', 'width': '10%'},
+									  {'name': 'Filing Number', 'field': 'FilingNumber', 'width': '10%','formatter': wid.formatURL},
+									  {'name': 'Filing Date', 'field': 'FilingDate', 'width': '10%'},
+									  {'name': 'Pages', 'field': 'Pages', 'width': '10%'},
+									  {'name': 'Notes', 'field': 'Notes', 'width': '10%'},
+									  {'name': 'Scanned By', 'field': 'ScannedBy', 'width': '10%'},
+									  {'name': 'Processed By', 'field': 'ProcessedBy', 'width': '10%'},
+									  {'name': 'Verified By', 'field': 'VerifiedBy', 'width': '10%'},
+									  {'name': 'Form Type', 'field': 'FormType', 'width': '10%'},
+									  {'name': 'Old Filing Number', 'field': 'OldFilingNumber', 'width': '10%'},
+									  {'name': 'GUID', 'field': 'GUID', 'hidden': true},
 									]];
 									wid.historyDataGrid.setStructure(layout3);
 									wid.historyDataGrid.resize();
@@ -3957,7 +2509,7 @@ define(["dojo/_base/declare",
 							var serviceParams3 = new Object();
 							serviceParams3.input = obj.FileID;
 							serviceParams3.input2 = (wid.isFoS.value=='true')?true:false;
-							Request.invokePluginService("claimCustomPlugin", "notesService",
+							Request.invokePluginService("eSoSCustomPlugin", "notesService",
 							{
 								requestParams: serviceParams3,
 								synchronous:true,
@@ -3980,10 +2532,10 @@ define(["dojo/_base/declare",
 									var store4 = new ItemFileWriteStore({data: data4});
 									wid.notesDataGrid.setStore(store4);
 									var layout4 = [[
-									  {'name': 'NoteId', 'field': 'NoteId', 'hidden': true,'noresize': true},
-									  {'name': 'User Name', 'field': 'User', 'width': '25%','noresize': true},
-									  {'name': 'Creation Date', 'field': 'CreationDate', 'width': '25%','noresize': true},
-									  {'name': 'Note Text', 'field': 'Note', 'width': '50%','noresize': true}
+									  {'name': 'NoteId', 'field': 'NoteId', 'hidden': true},
+									  {'name': 'User Name', 'field': 'User', 'width': '25%'},
+									  {'name': 'Creation Date', 'field': 'CreationDate', 'width': '25%'},
+									  {'name': 'Note Text', 'field': 'Note', 'width': '50%'}
 									]];
 									wid.notesDataGrid.setStructure(layout4);
 									wid.notesDataGrid.canSort = function(col){ return false; }; 
@@ -3992,36 +2544,11 @@ define(["dojo/_base/declare",
 								}
 							});
 						}
-						
 				  });
-				  var formType=wid.txtFormType.getValue();
-				  if(formType != 'UCC3' && formType != 'UCC5' && formType != 'FOS'){
-					var currDate=new Date(wid.txtFillingDate.getValue());
-					var lapsePeriod=wid.lapsePeriods[wid.ddlType.getValue()];
-					
-					if(lapsePeriod)
-						currDate.setFullYear(currDate.getFullYear()+parseInt(lapsePeriod));
-					else
-						currDate.setFullYear(currDate.getFullYear());
-					if(theDialog.get("title") == 'Tax Payer' && lapsePeriod == '10'){
-						currDate.setMonth(currDate.getMonth()+1);
-					}	
-					var curr_day = currDate.getDate();
-					var curr_month = currDate.getMonth()+1;
-					var curr_year = currDate.getFullYear();
-					if(curr_day<10)
-						curr_day="0"+curr_day;
-					if(curr_month<10)
-						curr_month="0"+curr_month;
-					
-					if(lapsePeriod){
-						wid.lastLapse=wid.txtLapseDate.getValue();
-						wid.txtLapseDate.setValue(curr_month+"/"+curr_day+"/"+curr_year);
-					}
-					else
-						wid.txtLapseDate.setValue(wid.lastLapse);
-				}
 			},
+			/*
+			Gets the details of a specific debtor or secured party
+			*/
 			initDebtorSecurePartyDetails: function(debtorId,fromEsos){
 				var wid=this;
 				this.txtDebtorId.value=debtorId;
@@ -4030,55 +2557,42 @@ define(["dojo/_base/declare",
 				var jsonStr='{"debitorId":"'+debtorId+'","FromEsos":"'+fromEsos+'"}'
 				serviceParams.input = jsonStr;
 					//alert(repository.id);
-				if(debtorId == -1){
-					wid.txtOrganization3.setValue("INTERNAL REVENUE SERVICE");
-					wid.txtAddress13.setValue("P.O. BOX 145595");
-					wid.txtCity3.setValue("CINCINNATI");
-					wid.txtState3.setValue("OH");
-					wid.txtZip3.setValue("45250-5595");
-					wid.ddlTaxTypes.setValue("Lien Holder");
-					wid.btnSaveDeptor.setDisabled(true);
-				}
-				else{
-					wid.btnSaveDeptor.setDisabled(false);
-					Request.invokePluginService("claimCustomPlugin", "deptorDetailsService",
-					{
-						requestParams: serviceParams,
-						synchronous:true,
-						requestCompleteCallback: function(response) {	// success
-							var jsonResponse=dojo.toJson(response, true, "  ");
-							var obj = JSON.parse(jsonResponse);
-							wid.txtFirstName3.setValue(obj.Individual_Name);
-							wid.txtFirstName3.setValue(obj.FirstName);
-							wid.txtMiddleName3.setValue(obj.MiddleInitial);
-							wid.txtLastName3.setValue(obj.LastName);
-							wid.txtSuffixName3.setValue(obj.Suffix);
-							wid.txtOrganization3.setValue(obj.Orgnization);
-							wid.txtAddress13.setValue(obj.Address_1);
-							wid.txtAddress23.setValue(obj.Address_2);
-							wid.txtCity3.setValue(obj.City);
-							wid.txtState3.setValue(obj.State);
-							if(wid.txtState3.getValue()=='')
-								wid.txtState3.setValue('NV');
-							wid.txtZip3.setValue(obj.Zip);
-							wid.txtCountry3.setValue(obj.Country);
-							//wid.txtPhone3.setValue(obj.Phone);
-							//wid.txtEmail3.setValue(obj.Email);
-							if(wid.txtDialogType.value=="TaxLien"){
-								if(obj.TypeCode == "1")
-									wid.ddlTaxTypes.setValue("Tax Payer");
-								else
-									wid.ddlTaxTypes.setValue("Lien Holder");
-							}
-							else{
-								if(obj.TypeCode == "1")
-									wid.ddlDebtorTypes.setValue("Debtor");
-								else
-									wid.ddlDebtorTypes.setValue("Secured Party");
-							}
+					
+				Request.invokePluginService("eSoSCustomPlugin", "deptorDetailsService",
+				{
+					requestParams: serviceParams,
+					synchronous:true,
+					requestCompleteCallback: function(response) {	// success
+						var jsonResponse=dojo.toJson(response, true, "  ");
+						var obj = JSON.parse(jsonResponse);
+						wid.txtFirstName3.setValue(obj.Individual_Name);
+						wid.txtFirstName3.setValue(obj.FirstName);
+						wid.txtMiddleName3.setValue(obj.MiddleInitial);
+						wid.txtLastName3.setValue(obj.LastName);
+						wid.txtSuffixName3.setValue(obj.Suffix);
+						wid.txtOrganization3.setValue(obj.Orgnization);
+						wid.txtAddress13.setValue(obj.Address_1);
+						wid.txtAddress23.setValue(obj.Address_2);
+						wid.txtCity3.setValue(obj.City);
+						wid.txtState3.setValue(obj.State);
+						if(wid.txtState3.getValue()=='')
+							wid.txtState3.setValue('NV');
+						wid.txtZip3.setValue(obj.Zip);
+						wid.txtCountry3.setValue(obj.Country);
+						if(wid.txtDialogType.value=="TaxLien"){
+							if(obj.TypeCode == "1")
+								wid.ddlTaxTypes.setValue("Tax Payer");
+							else
+								wid.ddlTaxTypes.setValue("Lien Holder");
 						}
-					});
-				}
+						else{
+							if(obj.TypeCode == "1")
+								wid.ddlDebtorTypes.setValue("Debtor");
+							else
+								wid.ddlDebtorTypes.setValue("Secured Party");
+						}
+					}
+				});
 			}
 			
         });
