@@ -8,6 +8,10 @@
  *******************************************************************************/
 package hk.com.claim;
 
+import hk.com.claim.features.LookupManagerFeature;
+import hk.com.claim.services.GetConfigurations;
+import hk.com.claim.services.SaveConfigurationsService;
+
 import java.util.Locale;
 
 import com.ibm.ecm.extension.Plugin;
@@ -44,5 +48,15 @@ public class ClaimCustomPlugin extends Plugin {
     @Override
     public String getConfigurationDijitClass() {
         return "hk.com.claim.widgets.claimPlugin.ConfigurationPane";
+    }
+    
+    @Override
+    public PluginFeature[] getFeatures() {
+       return new  PluginFeature[] {new LookupManagerFeature()};
+    }
+    
+    @Override
+    public PluginService[] getServices() {
+       return new  PluginService[] {new GetConfigurations(),new SaveConfigurationsService()};
     }
 }

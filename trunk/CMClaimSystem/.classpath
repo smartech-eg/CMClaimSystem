@@ -4,6 +4,7 @@
 	<classpathentry kind="lib" path="claimCustomPlugin/lib/j2ee.jar"/>
 	<classpathentry kind="lib" path="claimCustomPlugin/lib/nexus.jar"/>
 	<classpathentry kind="lib" path="claimCustomPlugin/lib/org.json_1.0.0.v201011060100.jar"/>
+	<classpathentry kind="lib" path="claimCustomPlugin/lib/JSON4J_Apache.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

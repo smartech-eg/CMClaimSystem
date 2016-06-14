@@ -14,6 +14,7 @@
 		<classpath>
 			<pathelement location="./lib/nexus.jar" />
 			<pathelement location="./lib/j2ee.jar" />
+			<pathelement location="./lib/JSON4J_Apache.jar" />
 		</classpath>
 	</javac>
 	<copy todir="./bin" overwrite="yes">
