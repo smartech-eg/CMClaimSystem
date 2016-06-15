@@ -13,7 +13,8 @@ import org.quartz.SchedulerFactory;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
 
-import com.hk.ecm.claims.connection.ConnectionManager;
+import com.hk.ecm.claims.db.DBOperations;
+import com.hk.ecm.claims.utils.ConfigurationManager;
 
 public class JobSchedule implements ServletContextListener {
 
@@ -23,14 +24,29 @@ public class JobSchedule implements ServletContextListener {
 	}
 
  	public void contextDestroyed(ServletContextEvent arg0) {
-		// TODO Auto-generated method stub
+ 		SchedulerFactory schFactory = new StdSchedulerFactory();
+ 		Scheduler scheduler=null;
+		try {
+			scheduler = schFactory.getScheduler();
+			if (scheduler.isStarted()) {
 
+	 			scheduler.shutdown();
+	 			System.out.println("Job ShutDown");
+
+	 			}
+		} catch (SchedulerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+ 		
 	}
 
 	 
 	public void contextInitialized(ServletContextEvent arg0) {
-		String timerExpression = ConnectionManager.myResources
-				.getString("Timer_Expression");
+		System.out.println("Configuration : ");
+		System.out.println(ConfigurationManager.configuration.toString());
+		ConfigurationManager.configuration=DBOperations.loadConfigurations();
+		String timerExpression = ConfigurationManager.configuration.get("Timer_Expression");
 		
 		CronTrigger StatusDispatchingCronTrigger = TriggerBuilder
 				.newTrigger()
