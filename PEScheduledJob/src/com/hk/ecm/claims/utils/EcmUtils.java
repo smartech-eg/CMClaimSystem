@@ -15,18 +15,16 @@ public class EcmUtils {
 		// TODO Auto-generated constructor stub
 	}
 
-	public boolean checkEligableForStatusDispatch(String status) {
-		String dispatchingStatus = ConnectionManager.myResources
-				.getString("Dispatching_Status");
+	public boolean checkEligableForStatusDispatch(String status,String dispatchingStatus) {
+		
 		if(status.equals(dispatchingStatus))
 			return true;
 		else
 			return false;
 	}
 	
-	public boolean checkEligableForPaymentDispatch(String status) {
-		String dispatchingPayment= ConnectionManager.myResources
-				.getString("Dispatching_Payment");;
+	public boolean checkEligableForPaymentDispatch(String status,String dispatchingPayment) {
+		
 		String [] payments=dispatchingPayment.split(",");
 		ArrayList<String>paymentStatus=new ArrayList<String>();
 		for (int i = 0; i < payments.length; i++) {

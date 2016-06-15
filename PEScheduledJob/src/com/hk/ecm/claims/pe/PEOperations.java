@@ -2,8 +2,6 @@ package com.hk.ecm.claims.pe;
 
 import java.util.HashMap;
 
-import org.apache.xerces.impl.xpath.XPath.Step;
-
 import com.filenet.api.core.Connection;
 import com.filenet.api.core.Domain;
 import com.filenet.api.core.Factory;
@@ -37,15 +35,12 @@ public class PEOperations {
 					false);
 		}
 		workItem.doLock(true);
-		workItem.doSave(false);
+		workItem.doSave(true);
 
 	}
 
 	public void dispatchWithResponse(VWStepElement workItem) {
-		String stepResponse = ConnectionManager.myResources
-				.getString("Step_Response");
-
-		workItem.doLock(true);
+        workItem.doLock(true);
 		workItem.doDispatch();
 	}
 

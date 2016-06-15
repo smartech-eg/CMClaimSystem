@@ -14,6 +14,7 @@ import com.filenet.api.core.Connection;
 import com.filenet.api.core.Domain;
 import com.filenet.api.core.Factory;
 import com.filenet.api.util.UserContext;
+import com.hk.ecm.claims.utils.ConfigurationManager;
 
 import filenet.vw.api.VWSession;
 
@@ -24,10 +25,10 @@ public class ConnectionManager {
 
 	public Connection getFNConnection() {
 
-		String fnURL = myResources.getString("FN_URL");
-		String userName = myResources.getString("User_Name");
-		String password = myResources.getString("Password");
-		String stanza = myResources.getString("Stanza");
+		String fnURL = ConfigurationManager.configuration.get("FN_URL");
+		String userName = ConfigurationManager.configuration.get("User_Name");
+		String password =ConfigurationManager.configuration.get("Password");
+		String stanza = ConfigurationManager.configuration.get("Stanza");
 
 		Connection conn = Factory.Connection.getConnection(fnURL);
 		Subject subject = UserContext.createSubject(conn, userName, password,
@@ -39,10 +40,10 @@ public class ConnectionManager {
 
 	public VWSession getVWSession() {
 
-		String fnURL = myResources.getString("FN_URL");
-		String userName = myResources.getString("User_Name");
-		String password = myResources.getString("Password");
-		String connectionPoint = myResources.getString("Connection_Point");
+		String fnURL = ConfigurationManager.configuration.get("FN_URL");
+		String userName = ConfigurationManager.configuration.get("User_Name");
+		String password = ConfigurationManager.configuration.get("Password");
+		String connectionPoint = ConfigurationManager.configuration.get("Connection_Point");
 
 		VWSession vwSession = new VWSession();
 		vwSession.setBootstrapCEURI(fnURL);
@@ -58,7 +59,7 @@ public class ConnectionManager {
 	}
 
 	public java.sql.Connection getDBConnection() {
-		String dataSourceName = myResources.getString("DB_JNDI");
+		String dataSourceName = ConnectionManager.myResources.getString("DB_JNDI");
 		java.sql.Connection dbConnection = null;
 		try {
 			if (dataSource == null) {
