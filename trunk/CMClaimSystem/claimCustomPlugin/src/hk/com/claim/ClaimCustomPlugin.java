@@ -57,6 +57,6 @@ public class ClaimCustomPlugin extends Plugin {
     
     @Override
     public PluginService[] getServices() {
-       return new  PluginService[] {new GetConfigurations(),new SaveConfigurationsService()};
+       return new  PluginService[] {new GetConfigurations(),new SaveConfigurationsService(),new ConfigurationService()};
     }
 }
