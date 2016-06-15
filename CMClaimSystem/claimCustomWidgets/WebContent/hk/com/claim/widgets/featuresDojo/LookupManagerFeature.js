@@ -98,33 +98,35 @@ define(
 															.setStore(store);
 													var gridLayout = [ {
 														defaultCell : {
-															width : 8,
 															editable : true,
 															type : cells._Widget,
-															styles : 'text-align: right;'
+															styles : 'text-align: left;'
 														},
 														cells : [
 																{
 																	name : 'ID',
 																	field : 'ID',
-																	styles : 'text-align: center;',
+																	styles : 'text-align: left;',
 																	editable : false,
-																	width : '11%'
-																},
-																{
-																	name : 'Disc',
-																	field : 'Disc',
-																	styles : 'text-align: center;',
-																	editable : false,
-																	width : '11%'
+																	width : '7%'
 																},
 																{
 																	name : 'Value',
 																	field : 'Value',
-																	styles : 'text-align: center;',
+																	styles : 'text-align: left;',
 																	editable : true,
-																	width : '11%'
-																}]
+																	width : '9%'
+																}
+																,
+																{
+																	name : 'Description',
+																	field : 'Disc',
+																	styles : 'text-align: left;',
+																	editable : false,
+																	width : '15%'
+																}
+																
+																]
 													} ];
 
 													
