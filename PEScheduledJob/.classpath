@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5">
+		<attributes>
+			<attribute name="owner.project.facets" value="java"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
+	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/c3p0-0.9.1.1.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/j2ee.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/Jace.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/javaapi.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/log4j.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/pe.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/pe3pt.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/peResources.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/quartz-2.1.7.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/slf4j-api-1.6.1.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/slf4j-log4j12-1.6.1.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/stax-api.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/xlxpScanner.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/xlxpScannerUtils.jar"/>
+	<classpathentry kind="output" path="build/classes"/>
+</classpath>
