@@ -3,6 +3,7 @@ package hk.com.claim.services;
 import hk.com.claim.db.LookupManagerDAO;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,8 +24,19 @@ public class SaveConfigurationsService extends PluginService {
 		JSONArray rows = new JSONArray(request.getParameter("inputJSON"));
 		String user = request.getParameter("user");
 		LookupManagerDAO configigDataDao = new LookupManagerDAO();
+		ArrayList<String> updatedIds=new ArrayList<String>();
+		JSONObject jsonObject=null;
+		
 		for (int i = 0; i < rows.size(); i++) {
-			configigDataDao.saveConfigrationData(new JSONObject(rows.get(i)),user);
+			
+			jsonObject=new JSONObject(rows.get(i));
+			String ID=jsonObject.get("ID").toString();
+			if(!updatedIds.contains(ID))
+			{
+				updatedIds.add(ID);
+				configigDataDao.saveConfigrationData(jsonObject,user);	
+			}
+			
 		}
 		
 		
