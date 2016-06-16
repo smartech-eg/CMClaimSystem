@@ -21,10 +21,12 @@ public class SaveConfigurationsService extends PluginService {
 		PrintWriter responseWriter = response.getWriter();
 
 		JSONArray rows = new JSONArray(request.getParameter("inputJSON"));
+		String user = request.getParameter("user");
 		LookupManagerDAO configigDataDao = new LookupManagerDAO();
 		for (int i = 0; i < rows.size(); i++) {
-			configigDataDao.saveConfigrationData(new JSONObject(rows.get(i)));
+			configigDataDao.saveConfigrationData(new JSONObject(rows.get(i)),user);
 		}
+		
 		
 		JSONArray retArr = new JSONArray();
 		JSONObject retObj = new JSONObject();

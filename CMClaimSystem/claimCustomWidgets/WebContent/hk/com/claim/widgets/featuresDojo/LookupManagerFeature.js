@@ -46,14 +46,14 @@ define(
 
 							
 
-							/*ecm.model.desktop.loadDesktop(null, function() {
+							cm.model.desktop.loadDesktop(null, function() {
 								var repository = ecm.model.desktop
 										.getDefaultRepository();
 								if (repository.connected) {
 									wid.repository = repository;
 								}
 							}, true);
-							*/
+							
 
 							var data = {
 								items : []
@@ -133,6 +133,14 @@ define(
 
 													wid.configDataGrid
 															.setStructure(gridLayout);
+													
+										            
+                                                    wid.configDataGrid.onApplyCellEdit = function(
+                                                            inValue,
+                                                            inRowIndex,
+                                                            inFieldIndex) {
+                                                    	records.push(inRowIndex);
+                                                            };
 
 													wid.configDataGrid.resize();
 												}
@@ -202,10 +210,10 @@ define(
 							var serviceParams = new Object();
 							var jsonStr = "[";
 
-							for (var j = 0; j < dataObject.length; j++) {
+							for (var j = 0; j < records.length; j++) {
 								if (j != 0)
 									jsonStr += ',';
-								var item = wid.configDataGrid.store._arrayOfAllItems[j];
+								var item = wid.configDataGrid.store._arrayOfAllItems[records[j]];
  								dataObject[j].ID = item.ID;
 								dataObject[j].Disc = item.Disc;
 								dataObject[j].Value = item.Value;
@@ -219,7 +227,7 @@ define(
 							}
 							jsonStr += "]";
 							serviceParams.inputJSON = jsonStr;
-
+							serviceParams.user=wid.repository.userId;
 							Request
 									.invokePluginService(
 											"claimCustomPlugin",
