@@ -30,7 +30,7 @@ define(
 					"hk.com.claim.widgets.featuresDojo.LookupManagerFeature",
 					[ _LaunchBarPane ],
 					{
-						/** @lends iGReportsDojo.CPAReportsFeature.prototype */
+					
 
 						templateString : template,
 						webAppURL : "",
@@ -46,7 +46,7 @@ define(
 
 							
 
-							cm.model.desktop.loadDesktop(null, function() {
+							ecm.model.desktop.loadDesktop(null, function() {
 								var repository = ecm.model.desktop
 										.getDefaultRepository();
 								if (repository.connected) {
@@ -115,7 +115,24 @@ define(
 																	field : 'Value',
 																	styles : 'text-align: left;',
 																	editable : true,
-																	width : '9%'
+																	width : '9%',
+																    formatter : function( item,rowIndex,cell) {
+																	
+																	 var gridRow = wid.configDataGrid
+                                                                        .getItem(rowIndex);
+																	if(gridRow["ID"]=="Password")
+																	{
+																	
+																	return "*********";
+																	}
+																	else
+																	{
+ 																	return gridRow["Value"];
+																	}
+                                                                        
+                                                                        
+
+                                                                    }
 																}
 																,
 																{
@@ -139,7 +156,12 @@ define(
                                                             inValue,
                                                             inRowIndex,
                                                             inFieldIndex) {
+															
+														inValue
+														
+														if(dataObject[inRowIndex].Value!=inValue){
                                                     	records.push(inRowIndex);
+														}
                                                             };
 
 													wid.configDataGrid.resize();
@@ -239,7 +261,25 @@ define(
 														response) {
 													records = new Array();
 													alert("Save operation completed successfully");
-
+													
+													
+														var serviceParams = new Object();
+							
+							Request
+									.invokePluginService(
+											"claimCustomPlugin",
+											"getConfigDataService",
+											{
+												requestParams : serviceParams,
+												requestCompleteCallback : function(
+														response) {
+													var jsonResponse = dojo
+															.toJson(response,
+																	true, "  ");
+													dataObject = JSON
+															.parse(jsonResponse);
+															}});
+													
 												}
 											});
 
