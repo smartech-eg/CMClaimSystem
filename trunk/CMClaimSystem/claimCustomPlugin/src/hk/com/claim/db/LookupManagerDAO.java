@@ -41,14 +41,16 @@ public class LookupManagerDAO {
 
 	/**
 	 * Remove Redundant data from a list
+	 * @param user 
 	 * 
 	 * @param lookupList
 	 *            is Java Collection List
 	 */
 
-	public boolean saveConfigrationData(JSONObject input) {
+	public boolean saveConfigrationData(JSONObject input, String user) {
 		Connection con = null;
 		PreparedStatement updateValue = null;
+		PreparedStatement auditStatment=null;
 		try {
 			String dataSourceName = "ECMCLAIMSDS";
 			con = ConnectionManager.getConnection(dataSourceName);
@@ -57,11 +59,16 @@ public class LookupManagerDAO {
 			updateValue.setString(1, input.get("Value").toString());
 			updateValue.setString(2, input.get("ID").toString());
 			updateValue.executeUpdate();
+			String description="The User Updated "+input.get("ID")+" IN the Configration Page With Value "+input.get("Value").toString();
+			auditStatment=con.prepareStatement("EXEC dbo.insertAuditRecord  @Username = '"+user+"' , @Action_Description='"+description+"'");
+            //EXEC dbo.insertAuditRecord  @Username = 'Michael' , @Action_Description='Michael Description'
+			auditStatment.execute();
 			return true;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			return false;
 		} finally {
+			ConnectionManager.closeResource(auditStatment);
 			ConnectionManager.closeResource(updateValue);
 		    ConnectionManager.closeConnection(con);
 		}
