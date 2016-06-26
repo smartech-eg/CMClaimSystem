@@ -39,6 +39,8 @@ define(
 						repository : null,
 						dataObject : "",
 						records : "",
+						userInfoObject : "",
+						usrsRecords : "",
 						modifiedIndex : "",
 						postCreate : function() {
 						this.inherited(arguments);
@@ -58,9 +60,13 @@ define(
 							var data = {
 								items : []
 							};
+							
+							var usrData = {
+									items : []
+								};
 
 							var serviceParams = new Object();
-							
+							 
 							Request
 									.invokePluginService(
 											"claimCustomPlugin",
@@ -157,7 +163,7 @@ define(
                                                             inRowIndex,
                                                             inFieldIndex) {
 															
-														inValue
+														 
 														
 														if(dataObject[inRowIndex].Value!=inValue){
                                                     	records.push(inRowIndex);
@@ -169,6 +175,127 @@ define(
 											});
 
 						
+						 
+							
+							
+							
+							///User Info Tab
+							
+							var service = new Object();
+ 							Request
+									.invokePluginService(
+											"claimCustomPlugin",
+											"getUserDataService",
+											{
+												requestParams : service,
+												requestCompleteCallback : function(
+														response) {
+														 
+													var jsonResponse = dojo
+															.toJson(response,
+																	true, "  ");
+																	
+													userInfoObject = JSON
+															.parse(jsonResponse);
+															 
+													usrsRecords = new Array();
+ 													for (i = 0; i < userInfoObject.length; i++) {
+
+													     var User_Id = userInfoObject[i].User_Id;
+														var User_Team = userInfoObject[i].User_Team;
+														var User_Group = userInfoObject[i].User_Group;
+														var Min_Amount = userInfoObject[i].Min_Amount;
+														var Max_Amount = userInfoObject[i].Max_Amount;
+														usrData.items
+																.push({
+																	"User_Id" : User_Id,
+																	"User_Team" : User_Team,
+																	"User_Group" : User_Group ,
+																	"Min_Amount" : Min_Amount ,
+																	"Max_Amount" : Max_Amount 
+																	
+																	
+																});
+													}
+													
+ 													var stores = new ItemFileWriteStore(
+															{
+																data : usrData
+															});
+
+ 													wid.usersDataGrid
+															.setStore(stores);
+													var usergridLayout = [ {
+														defaultCell : {
+															editable : true,
+															type : cells._Widget,
+															styles : 'text-align: left;'
+														},
+														cells : [
+																{
+																	name : 'User_Id',
+																	field : 'User_Id',
+																	styles : 'text-align: left;',
+																	editable : false,
+																	width : '7%'
+																},
+																{
+																	name : 'User_Team',
+																	field : 'User_Team',
+																	styles : 'text-align: left;',
+																	editable : true,
+																	width : '9%'
+																  
+																}
+																,
+																{
+																	name : 'User_Group',
+																	field : 'User_Group',
+																	styles : 'text-align: left;',
+																	editable : true,
+																	width : '15%'
+																},
+																{
+																	name : 'Min_Amount',
+																	field : 'Min_Amount',
+																	styles : 'text-align: left;',
+																	editable : true,
+																	width : '15%'
+																}
+																,
+																{
+																	name : 'Max_Amount',
+																	field : 'Max_Amount',
+																	styles : 'text-align: left;',
+																	editable : true,
+																	width : '15%'
+																}
+																
+																]
+													} ];
+
+													
+ 													wid.usersDataGrid
+															.setStructure(usergridLayout);
+ 										            
+                                                   
+                                                   wid.usersDataGrid.onApplyCellEdit = function(
+                                                            inValue,
+                                                            inRowIndex,
+                                                            inFieldIndex) {
+															
+														 
+													
+														 if(usrsRecords.indexOf(inRowIndex)==-1)
+														 {
+ 														 usrsRecords.push(inRowIndex);
+														 }
+                                                    	
+														
+                                                            };
+													wid.usersDataGrid.resize();
+												}
+											});
 							this.logExit("postCreate");
 						},
 
@@ -277,6 +404,73 @@ define(
 															.toJson(response,
 																	true, "  ");
 													dataObject = JSON
+															.parse(jsonResponse);
+															}});
+													
+												}
+											});
+
+						},
+						
+						OnSaveUsers : function() {
+							var wid = this;
+							var serviceParams = new Object();
+							var jsonStr = "[";
+                           
+							for (var j = 0; j < usrsRecords.length; j++) {
+								if (j != 0)
+									jsonStr += ',';
+								var item = wid.usersDataGrid.store._arrayOfAllItems[usrsRecords[j]];
+ 								
+								userInfoObject[j].User_Id = item.User_Id;
+								userInfoObject[j].User_Team = item.User_Team;
+								userInfoObject[j].User_Group = item.User_Group;
+								userInfoObject[j].Min_Amount = item.Min_Amount;
+								userInfoObject[j].Max_Amount = item.Max_Amount;
+								
+								jsonStr += '{"User_Id":"'
+										+ item.User_Id
+										+ '","User_Team":"'
+										+ item.User_Team
+										+ '","User_Group":"'
+										+ item.User_Group
+										+ '","Min_Amount":"'
+										+ item.Min_Amount
+										+ '","Max_Amount":"'
+										+ item.Max_Amount
+										+ '"}';
+							}
+							jsonStr += "]";
+							
+							serviceParams.inputJSON = jsonStr;
+							serviceParams.user=wid.repository.userId;
+							Request
+									.invokePluginService(
+											"claimCustomPlugin",
+											"saveUserDataService",
+											{
+												requestParams : serviceParams,
+												synchronous : true,
+												requestCompleteCallback : function(
+														response) {
+													usrsRecords = new Array();
+													alert("Save operation completed successfully");
+													
+													
+														var serviceParams = new Object();
+							
+							Request
+									.invokePluginService(
+											"claimCustomPlugin",
+											"getUserDataService",
+											{
+												requestParams : serviceParams,
+												requestCompleteCallback : function(
+														response) {
+													var jsonResponse = dojo
+															.toJson(response,
+																	true, "  ");
+													userInfoObject = JSON
 															.parse(jsonResponse);
 															}});
 													
