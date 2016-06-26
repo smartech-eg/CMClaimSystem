@@ -10,7 +10,9 @@ package hk.com.claim;
 
 import hk.com.claim.features.LookupManagerFeature;
 import hk.com.claim.services.GetConfigurations;
+import hk.com.claim.services.GetUsersInfo;
 import hk.com.claim.services.SaveConfigurationsService;
+import hk.com.claim.services.SaveUsersInfo;
 
 import java.util.Locale;
 
@@ -57,6 +59,6 @@ public class ClaimCustomPlugin extends Plugin {
     
     @Override
     public PluginService[] getServices() {
-       return new  PluginService[] {new GetConfigurations(),new SaveConfigurationsService(),new ConfigurationService()};
+       return new  PluginService[] {new GetConfigurations(),new SaveConfigurationsService(),new ConfigurationService() ,new GetUsersInfo(), new SaveUsersInfo()};
     }
 }
