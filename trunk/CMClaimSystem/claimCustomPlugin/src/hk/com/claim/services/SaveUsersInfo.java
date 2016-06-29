@@ -1,9 +1,10 @@
 package hk.com.claim.services;
 
-import hk.com.claim.db.LookupManagerDAO;
+import hk.com.claim.db.ConnectionManager;
 import hk.com.claim.db.UsersManagersDAO;
 
 import java.io.PrintWriter;
+import java.sql.Connection;
 import java.util.ArrayList;
 
 import javax.servlet.http.HttpServletRequest;
@@ -16,42 +17,48 @@ import com.ibm.ecm.extension.PluginService;
 import com.ibm.ecm.extension.PluginServiceCallbacks;
 
 public class SaveUsersInfo extends PluginService {
- 	@Override
+	@Override
 	public void execute(PluginServiceCallbacks callbacks,
 			HttpServletRequest request, HttpServletResponse response)
 			throws Exception {
+		
+		
 		PrintWriter responseWriter = response.getWriter();
-
+		String dataSourceName = "ECMCLAIMSDS";
+		Connection con = ConnectionManager.getConnection(dataSourceName);
 		JSONArray rows = new JSONArray(request.getParameter("inputJSON"));
 		String user = request.getParameter("user");
 		UsersManagersDAO usersDataDao = new UsersManagersDAO();
-		ArrayList<String> updatedIds=new ArrayList<String>();
-		JSONObject jsonObject=null;
-		
+		ArrayList<String> updatedIds = new ArrayList<String>();
+		JSONObject jsonObject = null;
+
 		for (int i = 0; i < rows.size(); i++) {
-			
-			jsonObject=new JSONObject(rows.get(i));
-			String userId=jsonObject.get("User_Id").toString();
-			if(!updatedIds.contains(userId))
-			{
-				updatedIds.add(userId);
-				System.out.println(i+"  "+jsonObject);
-				usersDataDao.saveUsersData(jsonObject,user);	
+
+			jsonObject = new JSONObject(rows.get(i));
+			String ID= jsonObject.get("ID").toString();
+			if (!ID.equals("")) {
+				 
+					updatedIds.add(ID);
+					System.out.println(i + "  " + jsonObject);
+					usersDataDao.saveUsersData(jsonObject, user,con);
+				
+			} else {
+				usersDataDao.insertUsersData(jsonObject, user,con);
+
 			}
-			
 		}
-		
-		
+
 		JSONArray retArr = new JSONArray();
 		JSONObject retObj = new JSONObject();
 		retObj.put("Done", "true");
 		retArr.add(retObj);
- 		try {
+		try {
 			responseWriter.print(retArr);
- 			responseWriter.flush();
+			responseWriter.flush();
 		} catch (Exception e) {
- 		} finally {
 			
+		} finally {
+           ConnectionManager.closeConnection(con);
 			responseWriter.close();
 		}
 	}

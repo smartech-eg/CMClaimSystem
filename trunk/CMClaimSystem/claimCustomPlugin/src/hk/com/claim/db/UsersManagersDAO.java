@@ -22,7 +22,7 @@ public class UsersManagersDAO {
 
 			String dataSourceName = "ECMCLAIMSDS";
 			con = ConnectionManager.getConnection(dataSourceName);
-			String defaultsquery = "select * from dbo.Users_Data";
+			String defaultsquery = "select * from dbo.User_Data";
             System.out.println("Connected");
 			JSONArray usersData = new JSONArray();
 			defaultsStmt=con.prepareStatement(defaultsquery);
@@ -44,27 +44,28 @@ public class UsersManagersDAO {
 	/**
 	 * Remove Redundant data from a list
 	 * @param user 
+	 * @param con 
 	 * 
 	 * @param lookupList
 	 *            is Java Collection List
 	 */
 
-	public boolean saveUsersData(JSONObject input, String user) {
-		Connection con = null;
+	public boolean saveUsersData(JSONObject input, String user, Connection con) {
+		;
 		PreparedStatement updateValue = null;
 		PreparedStatement auditStatment=null;
 		try {
-			String dataSourceName = "ECMCLAIMSDS";
-			con = ConnectionManager.getConnection(dataSourceName);
+			
 			System.out.println("Connected");
 			updateValue = con
-					.prepareStatement("update dbo.Users_Data set User_Team= ? ,User_Group=? ,Min_Amount=? , Max_Amount=? where User_Id= ?");
+					.prepareStatement("update dbo.User_Data set User_Id= ?, User_Team= ? ,User_Group=? ,Min_Amount=? , Max_Amount=? where ID=?");
 		
-			updateValue.setString(1, input.get("User_Team").toString());
-			updateValue.setString(2, input.get("User_Group").toString());
-			updateValue.setString(3, input.get("Min_Amount").toString());
-			updateValue.setString(4, input.get("Max_Amount").toString());
-			updateValue.setString(5, input.get("User_Id").toString());
+			updateValue.setString(1, input.get("User_Id").toString());
+			updateValue.setString(2, input.get("User_Team").toString());
+			updateValue.setString(3, input.get("User_Group").toString());
+			updateValue.setInt(4,Integer.parseInt(input.get("Min_Amount").toString()));
+			updateValue.setInt(5,Integer.parseInt(input.get("Max_Amount").toString()));
+			updateValue.setInt(6, Integer.parseInt(input.get("ID").toString()));
 			System.out.println("before executing updates");
 			updateValue.executeUpdate();
 			System.out.println("after executing updates");
@@ -85,7 +86,6 @@ public class UsersManagersDAO {
 		} finally {
 			ConnectionManager.closeResource(auditStatment);
 			ConnectionManager.closeResource(updateValue);
-		    ConnectionManager.closeConnection(con);
 		}
 
 	}
@@ -99,7 +99,7 @@ public class UsersManagersDAO {
 		
 			JSONObject usersData = new JSONObject();
        
-			
+			usersData.put("ID", defaultsRs.getString("ID"));
 			usersData.put("User_Id", defaultsRs.getString("User_Id"));
 			usersData.put("User_Team", defaultsRs.getString("User_Team"));
 			usersData.put("User_Group", defaultsRs.getString("User_Group"));
@@ -112,6 +112,49 @@ public class UsersManagersDAO {
 		}
 		 
 		return usersArray;
+	}
+
+	public boolean insertUsersData(JSONObject input, String user,Connection con) {
+
+ 		PreparedStatement insertedValue = null;
+		PreparedStatement auditStatment=null;
+		try {
+			
+			System.out.println("Connected");
+			insertedValue = con
+					.prepareStatement("insert into dbo.User_Data (User_Id,User_Team,User_Group,Min_Amount,Max_Amount) values (?,?,?,?,?)");
+		
+			insertedValue.setString(1, input.get("User_Id").toString());
+			insertedValue.setString(2, input.get("User_Team").toString());
+			insertedValue.setString(3, input.get("User_Group").toString());
+			insertedValue.setInt(4,Integer.parseInt(input.get("Min_Amount").toString()));
+			insertedValue.setInt(5,Integer.parseInt(input.get("Max_Amount").toString()));
+			
+			System.out.println("before executing updates");
+			insertedValue.executeUpdate();
+			System.out.println("after executing updates");
+			String description="The User ["+user+"] inserted "+input.get("User_Id")+
+					" IN the Users Information Page With Value "+
+			input.get("User_Id").toString()+" - "+
+					input.get("User_Team").toString()+" - "+input.get("User_Group").toString()+" - "+
+					input.get("User_Group").toString()+" - "+input.get("Min_Amount").toString()+" - "+
+					input.get("Max_Amount").toString();
+			
+			auditStatment=con.prepareStatement("EXEC dbo.insertAuditRecord  @Username = '"+user+"' , @Action_Description='"+description+"'");
+            //EXEC dbo.insertAuditRecord  @Username = 'Michael' , @Action_Description='Michael Description'
+			auditStatment.execute();
+			return true;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return false;
+		} finally {
+			ConnectionManager.closeResource(auditStatment);
+			ConnectionManager.closeResource(insertedValue);
+		   
+		}
+
+	
+		
 	}
 
 
