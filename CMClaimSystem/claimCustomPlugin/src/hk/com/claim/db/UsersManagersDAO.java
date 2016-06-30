@@ -158,7 +158,7 @@ public class UsersManagersDAO {
 	}
 
 	public boolean checkUserAmount(Connection con, String user_id,
-			String user_group, String user_team, String user_amount) {
+			String user_group,String user_amount) {
 
 
  		PreparedStatement stmt = null;
@@ -171,11 +171,10 @@ public class UsersManagersDAO {
 			userAmount=Integer.parseInt(user_amount);
 			System.out.println("Connected");
 			stmt = con
-					.prepareStatement("select Min_Amount, Max_Amount from dbo.User_Data where User_Id=? and User_Team=? and User_Group=?");
+					.prepareStatement("select Min_Amount, Max_Amount from dbo.User_Data where User_Id=? and User_Group=?");
 		
 			stmt.setString(1, user_id);
-			stmt.setString(2, user_team);
-			stmt.setString(3, user_group);
+			stmt.setString(2, user_group);
 			rs=stmt.executeQuery();
 			while (rs.next()) {
 		        minAmount=rs.getInt("Min_Amount");
