@@ -157,5 +157,51 @@ public class UsersManagersDAO {
 		
 	}
 
+	public boolean checkUserAmount(Connection con, String user_id,
+			String user_group, String user_team, String user_amount) {
+
+
+ 		PreparedStatement stmt = null;
+ 		ResultSet rs = null;
+ 		int minAmount = 0;
+ 		int maxAmount = 0;
+ 		boolean isUserInRange = false;
+ 		int userAmount;
+		try {
+			userAmount=Integer.parseInt(user_amount);
+			System.out.println("Connected");
+			stmt = con
+					.prepareStatement("select Min_Amount, Max_Amount from dbo.User_Data where User_Id=? and User_Team=? and User_Group=?");
+		
+			stmt.setString(1, user_id);
+			stmt.setString(2, user_team);
+			stmt.setString(3, user_group);
+			rs=stmt.executeQuery();
+			while (rs.next()) {
+		        minAmount=rs.getInt("Min_Amount");
+				maxAmount=rs.getInt("Max_Amount");
+			}
+			
+			
+			if(userAmount>=minAmount&&userAmount<=maxAmount)
+			{
+				
+				isUserInRange=true;
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			isUserInRange=false;
+		} finally {
+			ConnectionManager.closeResource(stmt);
+			ConnectionManager.closeResource(rs);
+		   
+		}
+
+	
+		return isUserInRange;
+	
+		
+	}
+
 
 }
