@@ -56,6 +56,7 @@ public class ClaimCustomPlugin extends Plugin {
     @Override
     public PluginFeature[] getFeatures() {
        return new  PluginFeature[] {new LookupManagerFeature()};
+       
     }
     
     @Override
