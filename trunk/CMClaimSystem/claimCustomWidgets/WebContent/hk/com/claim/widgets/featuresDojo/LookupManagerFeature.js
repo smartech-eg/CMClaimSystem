@@ -69,7 +69,7 @@ define(
 													dataObject = JSON
 															.parse(jsonResponse);
 													records = new Array();
-
+                                                       
 													for (i = 0; i < dataObject.length; i++) {
 
 														var ID = dataObject[i].ID;
@@ -380,7 +380,7 @@ define(
 
 						},
                         OnAddRow:function() {
-						stores.newItem({ID :"", User_Id : "",User_Team :"",User_Group:"",Min_Amount :"",Max_Amount:""});
+						stores.newItem({ID :"", User_Id : ".",User_Team :"",User_Group:"",Min_Amount :"",Max_Amount:""});
 						
 						},
 						OnSaveUsers : function() {

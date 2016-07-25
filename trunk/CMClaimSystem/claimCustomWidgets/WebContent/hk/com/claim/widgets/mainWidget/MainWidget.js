@@ -51,7 +51,7 @@ define(["dojo/_base/declare",
             widgetsInTemplate: true,
 			menu: null,
 			myCase: null,
-			jobNumber: null,
+			claimURL: "",
 			lapsePeriods: new Object(),
             constructor: function(context){
 				this.context=context;
@@ -63,7 +63,15 @@ define(["dojo/_base/declare",
             	this.inherited(arguments);
 				var wid=this;
 				var repository=wid.getSolution().getTargetOS();
-				
+				Request.invokePluginService("claimCustomPlugin", "configurationService",
+				{
+					synchronous:true,
+					requestCompleteCallback: function(response) {	// success
+						var jsonResponse=dojo.toJson(response, true, "  ");
+						var obj = JSON.parse(jsonResponse);
+						wid.claimURL=obj.configuration[0].value;
+					}
+				});
 				/*
 				Row click event handler for the filings grid
 				Enables/Disables button according to the filing type
@@ -83,7 +91,7 @@ define(["dojo/_base/declare",
 				});
 				
 				this.btnShowClaim.on("Click", function(evt){
-					var myWindow = window.open("http://www.google.com", "claimWindow", "width=1200px,height=600px,toolbar=no,titlebar=no,status=no");
+					var myWindow = window.open(wid.claimURL, "claimWindow", "width=1200px,height=600px,toolbar=no,titlebar=no,status=no");
 				});
 				
             },
@@ -95,13 +103,47 @@ define(["dojo/_base/declare",
 				var wid=this;
 				var myCase=payload.workItemEditable.getCase();
 				this.myCase=myCase;
+				var repository=wid.getSolution().getTargetOS();
+				
 				myCase.retrieveAttributes(lang.hitch(this,function(retAtt){
 					myCase.retrieveCaseFolder(lang.hitch(this,function(retFol){
 						console.log(retAtt);
-						wid.txtBatchNumber.setValue(retAtt.attributes['GLCL_BatchNumber']);
-						wid.txtClaimNumber.setValue(retAtt.attributes['GLCL_ClaimNumber']);
-						wid.txtMemberNumber.setValue(retAtt.attributes['GLCL_MemberNumber']);
-						wid.txtPolicyNumber.setValue(retAtt.attributes['GLCL_PolicyNumber']);
+						
+								
+						if(payload.workItemEditable.icmWorkItem.queueName != 'Inbox'){
+							var serviceParams = new Object();
+							serviceParams.user_id = repository.userId;
+							serviceParams.user_group = retAtt.attributes['GLCL_Team'];
+							serviceParams.user_amount = retAtt.attributes['GLCL_TotalIncurredAmount'];
+							Request.invokePluginService("claimCustomPlugin", "CheckUserAmount",
+							{
+								requestParams: serviceParams,
+								synchronous:true,
+								requestCompleteCallback: function(response) {
+									var jsonResponse=dojo.toJson(response, true, "  ");
+									var obj = JSON.parse(jsonResponse);
+									if(obj[0].isUserinRange==true){
+										payload.workItemEditable.icmWorkItem.moveToInbox(function(test){
+											alert("The selected job has been moved to your personal inbox please open it again for processing");
+											window.location.reload(false);
+										});
+									}
+									else{
+										payload.workItemEditable.icmWorkItem.abortStep(function(ret){
+											alert("Sorry you don't have permissions to process this job !!!");
+											window.location.reload(false);
+										});
+									}
+									console.log(obj);
+								}
+							});
+							
+						}
+						//wid.txtBatchNumber.setValue(retAtt.attributes['GLCL_BatchNumber']);
+						//wid.txtClaimNumber.setValue(retAtt.attributes['GLCL_ClaimNumber']);
+						//wid.txtMemberNumber.setValue(retAtt.attributes['GLCL_MemberNumber']);
+						//wid.txtPolicyNumber.setValue(retAtt.attributes['GLCL_PolicyNumber']);
+						wid.setAttributesValues(retAtt);
 						/*Retrieves the job details information
 						*/
 						retFol.retrieveFolderContents(false, function(results) {
@@ -114,7 +156,7 @@ define(["dojo/_base/declare",
 								}
 							});
 							console.log(itemIds);
-							var repository=wid.getSolution().getTargetOS();
+							
 							if(itemIds.length){
 								var serviceInput=[];
 								repository.retrieveMultiItem(itemIds,lang.hitch(this,function(retItems){
@@ -160,7 +202,45 @@ define(["dojo/_base/declare",
 			*/
 			handleICM_SaveCaseEvent: function(payload){
 				
-			}
+			},
 			
+			setAttributesValues: function(retAtt){
+				var wid=this;
+				wid.txtAccessorGroup.setValue(retAtt.attributes['GLCL_AccessorGroup']);
+				wid.txtAdjustmentDate.setValue(retAtt.attributes['GLCL_AdjustmentDate']);
+				wid.txtBatchNumber.setValue(retAtt.attributes['GLCL_BatchNumber']);
+				wid.txtClaimApprovalUser.setValue(retAtt.attributes['GLCL_ClaimApprovalUser']);
+				wid.txtClaimCopmany.setValue(retAtt.attributes['GLCL_ClaimCopmany']);
+				wid.txtClaimNumber.setValue(retAtt.attributes['GLCL_ClaimNumber']);
+				wid.txtClaimPrefix.setValue(retAtt.attributes['GLCL_ClaimPrefix']);
+				wid.txtClaimRegisterUser.setValue(retAtt.attributes['GLCL_ClaimRegisterUser']);
+				wid.txtClaimType.setValue(retAtt.attributes['GLCL_ClaimType']);
+				wid.txtDiagnosisCode.setValue(retAtt.attributes['GLCL_DiagnosisCode']);
+				wid.txtDOS.setValue(retAtt.attributes['GLCL_DOS']);
+				wid.txtEscalationGroup.setValue(retAtt.attributes['GLCL_EscalationGroup']);
+				wid.txtExcludeFromStatistic.setValue(retAtt.attributes['GLCL_ExcludeFromStatistic']);
+				wid.txtHardCopy.setValue(retAtt.attributes['GLCL_HardCopy']);
+				wid.txtHold.setValue(retAtt.attributes['GLCL_Hold']);
+				wid.txtInputGroup.setValue(retAtt.attributes['GLCL_InputGroup']);
+				wid.txtMemberHKID.setValue(retAtt.attributes['GLCL_MemberHKID']);
+				wid.txtMemberID.setValue(retAtt.attributes['GLCL_MemberID']);
+				wid.txtMemberNumber.setValue(retAtt.attributes['GLCL_MemberNumber']);
+				wid.txtMode.setValue(retAtt.attributes['GLCL_Mode']);
+				wid.txtPaymentDate.setValue(retAtt.attributes['GLCL_PaymentDate']);
+				wid.txtPaymentStatus.setValue(retAtt.attributes['GLCL_PaymentStatus']);
+				wid.txtPending1.setValue(retAtt.attributes['GLCL_Pending1']);
+				wid.txtPendingReason.setValue(retAtt.attributes['GLCL_PendingReason']);
+				wid.txtPolicyName.setValue(retAtt.attributes['GLCL_PolicyName']);
+				wid.txtPolicyNumber.setValue(retAtt.attributes['GLCL_PolicyNumber']);
+				wid.txtProcessDate.setValue(retAtt.attributes['GLCL_ProcessDate']);
+				wid.txtProviderName.setValue(retAtt.attributes['GLCL_ProviderName']);
+				wid.txtRecievedDate.setValue(retAtt.attributes['GLCL_RecievedDate']);
+				wid.txtStatus.setValue(retAtt.attributes['GLCL_Status']);
+				wid.txtSupervisorGroup.setValue(retAtt.attributes['GLCL_SupervisorGroup']);
+				wid.txtTeam.setValue(retAtt.attributes['GLCL_Team']);
+				wid.txtTotalIncurredAmount.setValue(retAtt.attributes['GLCL_TotalIncurredAmount']);
+				wid.txtTotalPaidAmount.setValue(retAtt.attributes['GLCL_TotalPaidAmount']);
+				wid.txtTotalShortfallAmount.setValue(retAtt.attributes['GLCL_TotalShortfallAmount']);
+			}
         });
 });

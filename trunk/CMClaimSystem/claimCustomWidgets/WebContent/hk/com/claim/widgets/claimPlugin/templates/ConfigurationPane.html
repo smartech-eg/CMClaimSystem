@@ -1,0 +1,27 @@
+<div>
+	<table class="propertyTable" role="presentation">
+		<tr>
+			<td class="propertyRowLabel"><span class="required">*</span> 
+			<label id="${id}_param1label" for="${id}_iisURL">Claim System URL :</label>&nbsp;
+			<div data-dojo-type="dijit/Tooltip" data-dojo-props="connectId:'${id}_param1label'" data-dojo-attach-point="param1FieldHelp" >The valid format: http://<server_name>:<port></div>
+			</td>
+			<td class="propertyRowValue">
+				<div id="${id}_claimSystemURL" data-dojo-attach-point="claimSystemURL"  data-dojo-attach-event="onKeyUp: _onParamChange" maxLength="2048"
+					data-dojo-type="ecm.widget.ValidationTextBox" required="true"
+					trim="true" propercase="false"></div>
+			</td>
+		</tr>
+		<tr>
+			<td class="propertyRowLabel"><span class="required">*</span> 
+			<label id="${id}_param2label" for="${id}_iisURL">Database Jindi :</label>&nbsp;
+			</td>
+			<td class="propertyRowValue">
+				<div id="${id}_dbJindi" data-dojo-attach-point="dbJindi"  data-dojo-attach-event="onKeyUp: _onParamChange" maxLength="2048"
+					data-dojo-type="ecm.widget.ValidationTextBox" required="true"
+					trim="true" propercase="false"></div>
+			</td>
+		</tr>
+	</table>
+</div>
+
+
