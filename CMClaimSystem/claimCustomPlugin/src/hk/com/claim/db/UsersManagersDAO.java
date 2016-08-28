@@ -202,5 +202,41 @@ public class UsersManagersDAO {
 		
 	}
 
+	
+	public String getUserGroupFromAmount(Connection con, String user_id,String user_amount) {
+
+
+ 		PreparedStatement stmt = null;
+ 		ResultSet rs = null;
+ 		String userGroup=null;
+ 		
+		try {
+ 			System.out.println("Connected");
+			stmt = con
+					.prepareStatement("SELECT User_Group FROM dbo.User_Data WHERE User_Id=? and ? BETWEEN Min_Amount AND Max_Amount");
+		
+			stmt.setString(1, user_id);
+			stmt.setString(2, user_amount);
+			rs=stmt.executeQuery();
+			while (rs.next()) {
+				userGroup=rs.getString("User_Group");
+			
+			}
+			
+			
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		
+		} finally {
+			ConnectionManager.closeResource(stmt);
+			ConnectionManager.closeResource(rs);
+		   
+		}
+
+	
+		return userGroup;
+	
+		
+	}
 
 }
