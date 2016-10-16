@@ -2,8 +2,6 @@ package com.hk.ecm.claims.utils;
 
 import java.util.ArrayList;
 
-import com.hk.ecm.claims.connection.ConnectionManager;
-
 public class EcmUtils {
 
 	public static void main(String[] args) {
@@ -17,7 +15,7 @@ public class EcmUtils {
 
 	public boolean checkEligableForStatusDispatch(String status,String dispatchingStatus) {
 		
-		if(status.equals(dispatchingStatus))
+		if(/*status.equals(dispatchingStatus)*/status!=null)
 			return true;
 		else
 			return false;

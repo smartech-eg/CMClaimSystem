@@ -49,6 +49,16 @@ public class PEOperations {
 		return workItem.getParameterValue(propertyName);
 
 	}
+	
+	
+	
+	public String getworkItemGUIDProperty(String propertyName,
+			VWStepElement workItem) {
+		
+	String [] guid=	(String[]) workItem.getParameterValue(propertyName);
+		return guid[0];
+
+	}
 
 	public static void main(String[] args) {
 		ConnectionManager connectionManager = new ConnectionManager();
