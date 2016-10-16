@@ -37,6 +37,21 @@ public class ConnectionManager {
 		return conn;
 
 	}
+	
+	public Connection getFNConnectionUAT() {
+
+		String fnURL = "http://192.168.50.58:9081/wsi/FNCEWS40SOAP";
+		String userName = "fnceadmin";
+		String password ="P@ssw0rd";
+		String stanza = "FileNetP8WSI";
+
+		Connection conn = Factory.Connection.getConnection(fnURL);
+		Subject subject = UserContext.createSubject(conn, userName, password,
+				stanza);
+		UserContext.get().pushSubject(subject);
+		return conn;
+
+	}
 
 	public VWSession getVWSession() {
 
@@ -44,6 +59,27 @@ public class ConnectionManager {
 		String userName = ConfigurationManager.configuration.get("User_Name");
 		String password = ConfigurationManager.configuration.get("Password");
 		String connectionPoint = ConfigurationManager.configuration.get("Connection_Point");
+
+		VWSession vwSession = new VWSession();
+		vwSession.setBootstrapCEURI(fnURL);
+		try {
+			vwSession.logon(userName, password, connectionPoint);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		//System.out.println(vwSession.getServerName());
+	     System.out.println("is Logged in:" + vwSession.isLoggedOn());
+		return vwSession;
+	}
+	
+	public VWSession getVWSessionTest() {
+
+		String fnURL = "http://192.168.50.58:9081/wsi/FNCEWS40MTOM";
+		String userName = "fnceadmin";
+		String password ="P@ssw0rd";
+		String stanza = "FileNetP8WSI";
+        String connectionPoint="CM_CP";
 
 		VWSession vwSession = new VWSession();
 		vwSession.setBootstrapCEURI(fnURL);
@@ -133,11 +169,11 @@ public class ConnectionManager {
 		// TODO Auto-generated method stub
 
 		ConnectionManager connectionManager = new ConnectionManager();
-		Connection conn = connectionManager.getFNConnection();
+		/*	Connection conn = connectionManager.getFNConnectionUAT();
 
 		Domain domain = Factory.Domain.fetchInstance(conn, null, null);
-		System.out.println("Domain: " + domain.get_Name());
-		VWSession session=connectionManager.getVWSession();
+		System.out.println("Domain: " + domain.get_Name());*/
+		VWSession session=connectionManager.getVWSessionTest();
 
 	}
 

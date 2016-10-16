@@ -9,7 +9,6 @@
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
 	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/c3p0-0.9.1.1.jar"/>
-	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/j2ee.jar"/>
 	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/Jace.jar"/>
 	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/javaapi.jar"/>
 	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/log4j.jar"/>
@@ -22,5 +21,6 @@
 	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/stax-api.jar"/>
 	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/xlxpScanner.jar"/>
 	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/xlxpScannerUtils.jar"/>
+	<classpathentry kind="lib" path="C:/Work/MyProjects/Claims/ECMClaimsSharedLib/j2ee.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

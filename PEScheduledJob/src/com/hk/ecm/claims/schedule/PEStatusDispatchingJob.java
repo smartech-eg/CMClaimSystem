@@ -7,6 +7,7 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
+import com.hk.ecm.claims.ce.CEOperations;
 import com.hk.ecm.claims.connection.ConnectionManager;
 import com.hk.ecm.claims.db.DBOperations;
 import com.hk.ecm.claims.pe.PEOperations;
@@ -44,8 +45,12 @@ public class PEStatusDispatchingJob implements Job {
 			String workItemUpdatedProperty = ConnectionManager.myResources
 					.getString("WorkItem_Updated_Property");*/
 
-			
-			
+			String GUIDPropertyName = ConfigurationManager.configuration.get("GUID_PropertyName");
+            String AmountPopertyName=ConfigurationManager.configuration.get("Amount_PopertyName");
+			String target_ObjectStorename=ConfigurationManager.configuration.get("Tatget_ObjectStore_name");
+			String amountDBColName=ConfigurationManager.configuration.get("Amount_Col_Name");
+					
+					
 			String workItemProperty = ConfigurationManager.configuration.get("WorkItem_Property");
 			String statusWorkBasketName = ConfigurationManager.configuration.get("WorkBasket_Status_Name");
 			String statusQueueName = ConfigurationManager.configuration.get("PE_Status_Queue_Name");
@@ -120,12 +125,23 @@ public class PEStatusDispatchingJob implements Job {
 							+ eligableForStatusDispatching);
 					if (eligableForStatusDispatching) {
 						updatedProperties.clear();
-						updatedProperties.put(workItemUpdatedProperty,
+						
+					System.out.println(">>Getting Guid");	 
+					String	guidPropertyValue=peOperations
+							.getworkItemGUIDProperty(GUIDPropertyName, workItem);
+					System.out.println(">>Guid Value is "+guidPropertyValue);
+					String amountPropertyValue=dbOperations.getWorkItemAmount(dbConnection, filterdWorkItemPropertyValue);
+					System.out.println(">>The Amount is "+amountPropertyValue);
+					CEOperations ceOperations=new CEOperations();
+					ceOperations.updateCaseFolderPropertyByID(guidPropertyValue, target_ObjectStorename, AmountPopertyName, amountPropertyValue);
+					
+						
+						/*updatedProperties.put(workItemUpdatedProperty,
 								workItemStatus);
 						System.out.println(">> Updating WorkItem Property As("
 								+ updatedProperties.toString() + ")");
 						peOperations.updateWorkItemProperties(workItem,
-								updatedProperties);
+								updatedProperties);*/
 						System.out.println(">> WorkItem Property Updated");
 						System.out.println(">> Dispatching WorkItem..");
 						peOperations.dispatchWithResponse(workItem);
@@ -173,8 +189,7 @@ public class PEStatusDispatchingJob implements Job {
 								workItemStatus);
 						System.out.println(">> Updating WorkItem Property As("
 								+ updatedProperties.toString() + ")");
-						peOperations.updateWorkItemProperties(workItem,
-								updatedProperties);
+						//peOperations.updateWorkItemProperties(workItem,updatedProperties);
 						System.out.println(">> WorkItem Property Updated");
 						System.out.println(">> Dispatching WorkItem..");
 						peOperations.dispatchWithResponse(workItem);
