@@ -1,6 +1,7 @@
 package com.hk.ecm.claims.schedule;
 
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.quartz.Job;
@@ -60,6 +61,12 @@ public class PEStatusDispatchingJob implements Job {
 			String dispatchingStatus = ConfigurationManager.configuration.get("Dispatching_Status");
 			String dispatchingPayment= ConfigurationManager.configuration.get("Dispatching_Payment");
  			
+			String rosterName = ConfigurationManager.configuration.get("Roster_name");
+			String terminateColName= ConfigurationManager.configuration.get("Terminate_Col_Name");
+			String terminateColValue= ConfigurationManager.configuration.get("Terminate_Col_value");
+			String caseIDColName =ConfigurationManager.configuration.get("caseID_Col_Name");
+			String caseIDParam= ConfigurationManager.configuration.get("CaseID_Param");
+			 
 			
 			
 /*			String filterStatusValue = ConnectionManager.myResources
@@ -94,9 +101,6 @@ public class PEStatusDispatchingJob implements Job {
 			  VWWorkBasket workBasket = peOperations.fetchWorkBasket(
 			  statusQueueName, statusWorkBasketName, peSession);
 			
-
-			/*VWQueueQuery query = peOperations.getQueryResult(statusPrm,
-					filterStatusValue, peSession, statusQueueName);*/
 
 			System.out
 					.println("Queue has been fetched Sucessfully , and found ["
@@ -198,8 +202,12 @@ public class PEStatusDispatchingJob implements Job {
 				}
 			}
 
-			//
-
+			//terminating work items
+			System.out.println("Start Terminating flaged WorkItems");
+			System.out.println("Getting Case id for terminating WorkItems");
+			ArrayList<String>caseIds=dbOperations.getTerminatedCaseIds(dbConnection, terminateColName, caseIDColName,terminateColValue);
+			System.out.println("Case Ids the will be terminated are "+caseIds.toString());
+            peOperations.terminateWorkObjectsWithCaseIds(peSession, caseIds, caseIDParam, rosterName,dbConnection);
 			// closing Connections
 			dbConnection.close();
 
