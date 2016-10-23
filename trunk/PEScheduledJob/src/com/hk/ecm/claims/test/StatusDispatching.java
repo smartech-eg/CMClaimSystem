@@ -2,6 +2,7 @@ package com.hk.ecm.claims.test;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.servlet.ServletException;
@@ -85,7 +86,12 @@ public class StatusDispatching extends HttpServlet {
 			String dispatchingPayment= ConfigurationManager.configuration.get("Dispatching_Payment");
  			
 			
-			
+			String rosterName = ConfigurationManager.configuration.get("Roster_name");
+			String terminateColName= ConfigurationManager.configuration.get("Terminate_Col_Name");
+			String caseIDColName =ConfigurationManager.configuration.get("caseID_Col_Name");
+			String caseIDParam= ConfigurationManager.configuration.get("CaseID_Param");
+			String terminateColValue= ConfigurationManager.configuration.get("Terminate_Col_value");
+
 /*			String filterStatusValue = ConnectionManager.myResources
 					.getString("Filter_Status_value");
 			String filterPaymentStatusValue = ConnectionManager.myResources
@@ -223,7 +229,12 @@ public class StatusDispatching extends HttpServlet {
 			}
 
 			//
-
+			//terminating work items
+			System.out.println("Start Terminating flaged WorkItems");
+			System.out.println("Getting Case id for terminating WorkItems");
+			ArrayList<String>caseIds=dbOperations.getTerminatedCaseIds(dbConnection, terminateColName, caseIDColName,terminateColValue);
+			System.out.println("Case Ids the will be terminated are "+caseIds.toString());
+            peOperations.terminateWorkObjectsWithCaseIds(peSession, caseIds, caseIDParam, rosterName,dbConnection);
 			// closing Connections
 			dbConnection.close();
 
