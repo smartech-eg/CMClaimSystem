@@ -15,7 +15,7 @@ public class EcmUtils {
 
 	public boolean checkEligableForStatusDispatch(String status,String dispatchingStatus) {
 		
-		if(/*status.equals(dispatchingStatus)*/status!=null)
+		if(!status.equals("0"))
 			return true;
 		else
 			return false;
