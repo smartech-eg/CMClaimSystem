@@ -8,6 +8,7 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
+import com.hk.ecm.claims.Model.Claim;
 import com.hk.ecm.claims.ce.CEOperations;
 import com.hk.ecm.claims.connection.ConnectionManager;
 import com.hk.ecm.claims.db.DBOperations;
@@ -135,9 +136,11 @@ public class PEStatusDispatchingJob implements Job {
 							.getworkItemGUIDProperty(GUIDPropertyName, workItem);
 					System.out.println(">>Guid Value is "+guidPropertyValue);
 					String amountPropertyValue=dbOperations.getWorkItemAmount(dbConnection, filterdWorkItemPropertyValue);
+					Claim claim=dbOperations.getClaimProperties(dbConnection, filterdWorkItemPropertyValue);
 					System.out.println(">>The Amount is "+amountPropertyValue);
 					CEOperations ceOperations=new CEOperations();
 					ceOperations.updateCaseFolderPropertyByID(guidPropertyValue, target_ObjectStorename, AmountPopertyName, amountPropertyValue);
+					ceOperations.updateAllCasePropertiesByID(guidPropertyValue,target_ObjectStorename,claim);
 					
 						
 						/*updatedProperties.put(workItemUpdatedProperty,

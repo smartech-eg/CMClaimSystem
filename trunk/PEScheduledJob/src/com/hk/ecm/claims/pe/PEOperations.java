@@ -139,11 +139,12 @@ public class PEOperations {
 		return rosQuery;
 	}
 
+	
 	public void terminateWorkObjectsWithCaseIds(VWSession vwSession,
 			ArrayList<String> caseIDs, String caseIDAttr, String rosterName,java.sql.Connection dbConnection) {
        DBOperations  dbOperations=new DBOperations();
-       String terminateColName= ConfigurationManager.configuration.get("Terminate_Col_Name");
-		String caseIDColName =ConfigurationManager.configuration.get("caseID_Col_Name");
+ 		String caseIDColName =ConfigurationManager.configuration.get("caseID_Col_Name");
+		String terminatedFlagColName=ConfigurationManager.configuration.get("TerminatedFlag");
        VWRoster vwros = vwSession.getRoster(rosterName);
 		for (int i = 0; i < caseIDs.size(); i++) {
 
@@ -165,11 +166,10 @@ public class PEOperations {
 				System.out.println(">>workItem fetchted");
 				vwWorkObject.doTerminate();
 				System.out.println(">>workItem terminated");
-				dbOperations.updateTerminateStatus(dbConnection, terminateColName, caseIDColName, caseIDs.get(i));
+				dbOperations.updateTerminateStatus(dbConnection, terminatedFlagColName, caseIDColName, caseIDs.get(i));
 			     System.out.println("DB Status updated");
 			}
 		}
 
 	}
-
 }

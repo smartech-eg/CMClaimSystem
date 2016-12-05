@@ -11,7 +11,6 @@ import javax.security.auth.Subject;
 import javax.sql.DataSource;
 
 import com.filenet.api.core.Connection;
-import com.filenet.api.core.Domain;
 import com.filenet.api.core.Factory;
 import com.filenet.api.util.UserContext;
 import com.hk.ecm.claims.utils.ConfigurationManager;
